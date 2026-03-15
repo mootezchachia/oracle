@@ -1,6 +1,6 @@
 #!/bin/bash
 # ORACLE — Main Runner
-# Usage: ./run.sh [scan|markets|reddit|fred|news|full|simulate]
+# Usage: ./run.sh [scan|targets|markets|reddit|fred|news|full|simulate]
 
 set -e
 cd "$(dirname "$0")"
@@ -15,7 +15,7 @@ echo "════════════════════════�
 echo ""
 
 case $ACTION in
-  scan|full)
+  full)
     cd nerve && python3 event_scorer.py
     ;;
 
@@ -54,16 +54,36 @@ case $ACTION in
     echo "  $ cat seeds/YOUR-SEED.md prompts/oracle.md"
     ;;
 
+  alerts|notify)
+    cd nerve && python3 notifier.py check
+    ;;
+
+  calibrate|score)
+    cd nerve && python3 calibration.py check && python3 calibration.py report
+    ;;
+
+  scan|targets)
+    cd nerve && python3 market_scanner.py
+    ;;
+
+  backtest)
+    cd nerve && python3 backtest.py
+    ;;
+
   *)
     echo "Usage: ./run.sh [command]"
     echo ""
     echo "  full       - Run complete scan (Polymarket + Reddit + FRED + News + Score)"
+    echo "  scan       - Scan and rank top simulation targets"
     echo "  dashboard  - Launch live dashboard on http://localhost:3000"
     echo "  markets    - Scan Polymarket only"
     echo "  reddit     - Scan Reddit only"
     echo "  fred       - Fetch economic data only"
     echo "  news       - Fetch news headlines only"
     echo "  simulate   - Show simulation targets"
+    echo "  alerts     - Check for alerts and notifications"
+    echo "  calibrate  - Check resolutions and print scoreboard"
+    echo "  backtest   - Run historical backtesting analysis"
     echo ""
     ;;
 esac

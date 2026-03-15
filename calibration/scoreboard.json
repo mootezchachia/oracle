@@ -1,0 +1,47 @@
+{
+  "predictions": [
+    {
+      "number": 1,
+      "market": "US x Iran Ceasefire by March 31",
+      "slug": "us-x-iran-ceasefire-by-march-31",
+      "oracle_yes": 8,
+      "market_yes": 15,
+      "direction": "NO",
+      "entry_price": 85,
+      "resolved": false,
+      "outcome": null,
+      "brier_oracle": null,
+      "brier_market": null,
+      "beat_market": null,
+      "pnl_cents": null,
+      "date_predicted": "2026-03-15",
+      "date_resolved": null
+    },
+    {
+      "number": 2,
+      "market": "Will Crude Oil (CL) hit $120 by end of March?",
+      "slug": "will-crude-oil-cl-hit-high-120-by-end-of-march-766-813-597",
+      "oracle_yes": 52,
+      "market_yes": 45,
+      "direction": "YES",
+      "entry_price": 45,
+      "resolved": false,
+      "outcome": null,
+      "brier_oracle": null,
+      "brier_market": null,
+      "beat_market": null,
+      "pnl_cents": null,
+      "date_predicted": "2026-03-15",
+      "date_resolved": null
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "resolved": 0,
+    "correct_direction": 0,
+    "avg_brier_oracle": null,
+    "avg_brier_market": null,
+    "total_pnl_cents": 0,
+    "win_rate": null
+  }
+}
