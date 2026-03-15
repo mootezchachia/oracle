@@ -1,0 +1,34 @@
+{
+  "event": "US attacks Iran's Kharg Island, neutralizing the defenses. In preparation for a possible ground operation and occupation.",
+  "event_score": 0.089,
+  "narrative_ambiguity": 0.3,
+  "pattern": "military_action",
+  "competing_narratives": [
+    "Strength projection \u2192 rally around the flag \u2192 approval up",
+    "Costly escalation \u2192 war fatigue \u2192 approval down"
+  ],
+  "market_relevance": 0.328,
+  "repricing_window": 0.9,
+  "repricing_desc": "US sleeping \u2014 slow absorption, large window (6-10 hours)",
+  "volume_potential": 1.0,
+  "affected_markets": [
+    {
+      "question": "US x Iran ceasefire by March 15?",
+      "slug": "us-x-iran-ceasefire-by-march-15",
+      "prices": "[\"0.0055\", \"0.9945\"]",
+      "volume": 9909891.328783153,
+      "relevance": 0.164,
+      "url": "https://polymarket.com/event/us-x-iran-ceasefire-by-march-15"
+    },
+    {
+      "question": "US x Iran ceasefire by June 30?",
+      "slug": "us-x-iran-ceasefire-by-june-30-752",
+      "prices": "[\"0.585\", \"0.415\"]",
+      "volume": 979966.599234998,
+      "relevance": 0.164,
+      "url": "https://polymarket.com/event/us-x-iran-ceasefire-by-june-30-752"
+    }
+  ],
+  "source": "reddit/r/wallstreetbets",
+  "source_velocity": 545.7
+}

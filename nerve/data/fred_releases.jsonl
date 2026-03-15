@@ -1,0 +1,7 @@
+{"timestamp": "2026-03-15T01:23:34.509907+00:00", "series_id": "UNRATE", "name": "Unemployment Rate", "latest": null}
+{"timestamp": "2026-03-15T01:23:34.917713+00:00", "series_id": "CPIAUCSL", "name": "Consumer Price Index", "latest": null}
+{"timestamp": "2026-03-15T01:23:35.325871+00:00", "series_id": "UMCSENT", "name": "Consumer Sentiment", "latest": null}
+{"timestamp": "2026-03-15T01:23:35.639545+00:00", "series_id": "FEDFUNDS", "name": "Federal Funds Rate", "latest": null}
+{"timestamp": "2026-03-15T01:23:36.044384+00:00", "series_id": "GDP", "name": "Real GDP", "latest": null}
+{"timestamp": "2026-03-15T01:23:36.450587+00:00", "series_id": "DCOILWTICO", "name": "WTI Crude Oil", "latest": null}
+{"timestamp": "2026-03-15T01:23:36.862262+00:00", "series_id": "T10Y2Y", "name": "Yield Curve (10Y-2Y Spread)", "latest": null}

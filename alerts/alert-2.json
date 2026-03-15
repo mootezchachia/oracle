@@ -1,0 +1,33 @@
+{
+  "event": "Weekend Discussion Thread for the Weekend of March 13, 2026",
+  "event_score": 0.077,
+  "narrative_ambiguity": 0.1,
+  "pattern": "unknown",
+  "competing_narratives": [
+    "Standard interpretation"
+  ],
+  "market_relevance": 0.85,
+  "repricing_window": 0.9,
+  "repricing_desc": "US sleeping \u2014 slow absorption, large window (6-10 hours)",
+  "volume_potential": 1.0,
+  "affected_markets": [
+    {
+      "question": "US x Iran ceasefire by March 15?",
+      "slug": "us-x-iran-ceasefire-by-march-15",
+      "prices": "[\"0.0055\", \"0.9945\"]",
+      "volume": 9909891.328783153,
+      "relevance": 0.45,
+      "url": "https://polymarket.com/event/us-x-iran-ceasefire-by-march-15"
+    },
+    {
+      "question": "Will the Bank of Brazil decrease the Selic rate after March 2026 meeting?",
+      "slug": "will-the-bank-of-brazil-decrease-the-selic-rate-after-march-2026-meeting",
+      "prices": "[\"0.8015\", \"0.1985\"]",
+      "volume": 97175.89567400001,
+      "relevance": 0.4,
+      "url": "https://polymarket.com/event/will-the-bank-of-brazil-decrease-the-selic-rate-after-march-2026-meeting"
+    }
+  ],
+  "source": "reddit/r/wallstreetbets",
+  "source_velocity": 972.6
+}

@@ -1,0 +1,86 @@
+{
+  "generated": "2026-03-15T00:00:00Z",
+  "engine": "ORACLE",
+  "version": "1.0",
+  "formula": "EVENT_SCORE = narrative_ambiguity * market_relevance * repricing_window * volume_potential",
+  "events": [
+    {
+      "seed_id": "CEASEFIRE-IRAN-2026-0331",
+      "seed_file": "seeds/seed_iran_ceasefire_march31.md",
+      "title": "US-Iran Ceasefire by March 31",
+      "event_score": 0.727,
+      "priority": "HIGH",
+      "factors": {
+        "narrative_ambiguity": 0.85,
+        "market_relevance": 1.00,
+        "repricing_window": 0.90,
+        "volume_potential": 0.95
+      },
+      "market": {
+        "question": "US x Iran ceasefire by March 31?",
+        "yes_price": 0.150,
+        "no_price": 0.850,
+        "volume_usd": 8570000,
+        "url": "https://polymarket.com/event/us-x-iran-ceasefire-by-march-31"
+      },
+      "days_to_resolution": 16
+    },
+    {
+      "seed_id": "OIL-120-2026-0331",
+      "seed_file": "seeds/seed_crude_oil_120.md",
+      "title": "Crude Oil $120 by End of March",
+      "event_score": 0.452,
+      "priority": "MEDIUM",
+      "factors": {
+        "narrative_ambiguity": 0.70,
+        "market_relevance": 0.95,
+        "repricing_window": 0.85,
+        "volume_potential": 0.80
+      },
+      "market": {
+        "question": "Will Crude Oil (CL) hit $120 by end of March?",
+        "yes_price": 0.450,
+        "no_price": 0.550,
+        "volume_usd": 3110000,
+        "url": "https://polymarket.com/event/will-crude-oil-cl-hit-high-120-by-end-of-march-766-813-597"
+      },
+      "days_to_resolution": 16
+    },
+    {
+      "seed_id": "REGIME-IRAN-2027",
+      "seed_file": "seeds/seed_iran_regime_2027.md",
+      "title": "Iranian Regime Fall Before 2027",
+      "event_score": 0.425,
+      "priority": "MEDIUM",
+      "factors": {
+        "narrative_ambiguity": 0.75,
+        "market_relevance": 0.90,
+        "repricing_window": 0.70,
+        "volume_potential": 0.90
+      },
+      "market": {
+        "question": "Will the Iranian regime fall before 2027?",
+        "yes_price": 0.385,
+        "no_price": 0.615,
+        "volume_usd": 9810000,
+        "url": null
+      },
+      "days_to_resolution": 291
+    }
+  ],
+  "context_snapshot": {
+    "fred": {
+      "wti_crude": 94.65,
+      "cpi": 327.46,
+      "unemployment": 4.4,
+      "consumer_sentiment": 56.4,
+      "fed_funds_rate": 3.64
+    },
+    "reddit_top_velocity": {
+      "title": "Israel is running critically low on interceptors, US officials say",
+      "velocity_per_hour": 3143,
+      "subreddit": "worldnews"
+    },
+    "related_markets_count": 12
+  }
+}

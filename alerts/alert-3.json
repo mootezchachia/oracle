@@ -1,0 +1,57 @@
+{
+  "event": "Democrats\u2019 Chances of Flipping Senate and House This Year Hit Record High",
+  "event_score": 0.072,
+  "narrative_ambiguity": 0.1,
+  "pattern": "unknown",
+  "competing_narratives": [
+    "Standard interpretation"
+  ],
+  "market_relevance": 0.8,
+  "repricing_window": 0.9,
+  "repricing_desc": "US sleeping \u2014 slow absorption, large window (6-10 hours)",
+  "volume_potential": 0.994,
+  "affected_markets": [
+    {
+      "question": "2026 Balance of Power: D Senate, D House",
+      "slug": "2026-balance-of-power-d-senate-d-house-949",
+      "prices": "[\"0.49\", \"0.51\"]",
+      "volume": 979352.7482750051,
+      "relevance": 0.4,
+      "url": "https://polymarket.com/event/2026-balance-of-power-d-senate-d-house-949"
+    },
+    {
+      "question": "Will Doug Bennett be the Republican nominee for Senate in Illinois?",
+      "slug": "will-doug-bennett-be-the-republican-nominee-for-senate-in-illinois",
+      "prices": "[\"0.005\", \"0.995\"]",
+      "volume": 9913.095265999998,
+      "relevance": 0.2,
+      "url": "https://polymarket.com/event/will-doug-bennett-be-the-republican-nominee-for-senate-in-illinois"
+    },
+    {
+      "question": "Will the Republican Party hold 57 or more Senate seats after the 2026 midterm elections?",
+      "slug": "will-the-republican-party-hold-57-or-more-senate-seats-after-the-2026-midterm-elections",
+      "prices": "[\"0.013\", \"0.987\"]",
+      "volume": 9998.708243000005,
+      "relevance": 0.2,
+      "url": "https://polymarket.com/event/will-the-republican-party-hold-57-or-more-senate-seats-after-the-2026-midterm-elections"
+    },
+    {
+      "question": "Will Bryce Reeves be the Republican nominee for Senate in Virginia?",
+      "slug": "will-bryce-reeves-be-the-republican-nominee-for-senate-in-virginia",
+      "prices": "[\"0.0055\", \"0.9945\"]",
+      "volume": 9819.663712,
+      "relevance": 0.2,
+      "url": "https://polymarket.com/event/will-bryce-reeves-be-the-republican-nominee-for-senate-in-virginia"
+    },
+    {
+      "question": "Will Ann Diener win the Alaska Senate race in 2026?",
+      "slug": "will-ann-diener-win-the-alaska-senate-race-in-2026",
+      "prices": "[\"0.0115\", \"0.9885\"]",
+      "volume": 9558.918044,
+      "relevance": 0.2,
+      "url": "https://polymarket.com/event/will-ann-diener-win-the-alaska-senate-race-in-2026"
+    }
+  ],
+  "source": "reddit/r/politics",
+  "source_velocity": 490.03
+}
