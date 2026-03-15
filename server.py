@@ -584,6 +584,58 @@ def api_status():
     })
 
 
+@app.route("/api/rss")
+def api_rss():
+    """RSS feed of ORACLE predictions — for IFTTT/dlvr.it auto-posting"""
+    preds = load_predictions()
+    active = [p for p in preds if p.get("market")]
+    active.sort(key=lambda x: x.get("number", 0), reverse=True)
+
+    items = ""
+    for p in active:
+        num = p.get("number", 0)
+        market = p.get("market", "Unknown")
+        url = p.get("url", "")
+        date = p.get("date", "2026-03-15")
+        tweet = p.get("tweet", "")
+
+        # Build tweet text if not available
+        if not tweet:
+            our_yes = "?"
+            if p.get("our_odds"):
+                import re as _re
+                m = _re.search(r'(\d+)%', p["our_odds"][0])
+                if m:
+                    our_yes = m.group(1)
+            cp = p.get("current_price", "")
+            cpm_match = __import__('re').search(r'(\d+)', cp)
+            mkt = cpm_match.group(1) if cpm_match else "?"
+            tweet = f"ORACLE #{num:03d}: {market}\nMarket: {mkt}% | ORACLE: {our_yes}%\n{url}"
+
+        items += f"""
+    <item>
+      <title>ORACLE #{num:03d}: {market}</title>
+      <link>{url}</link>
+      <description><![CDATA[{tweet}]]></description>
+      <pubDate>{date}</pubDate>
+      <guid>oracle-{num:03d}</guid>
+    </item>"""
+
+    rss = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>ORACLE — Narrative Arbitrage Engine</title>
+    <link>http://localhost:3000</link>
+    <description>AI-powered prediction market analysis. Simulates narratives to find Polymarket mispricing.</description>
+    <language>en-us</language>
+    {items}
+  </channel>
+</rss>"""
+
+    return Response(rss, mimetype="application/rss+xml",
+                    headers={"Cache-Control": "no-cache"})
+
+
 @app.route("/api/scan", methods=["POST"])
 def api_scan():
     threading.Thread(target=refresh_cache, daemon=True).start()
