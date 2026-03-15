@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 13px; }
+
+body {
+  background: #030506;
+  color: #e8edf4;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Mono', monospace;
+  min-height: 100vh;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(transparent 0px, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e2a3a; border-radius: 2px; }
+
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
+@keyframes ticker-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+@keyframes logo-glow { 0%,100%{box-shadow:0 0 15px rgba(240,180,41,.3)} 50%{box-shadow:0 0 25px rgba(240,180,41,.5)} }
+
+.animate-pulse-dot { animation: pulse 2s infinite; }
+.animate-ticker { animation: ticker-scroll 60s linear infinite; }
+.animate-logo { animation: logo-glow 4s ease-in-out infinite; }

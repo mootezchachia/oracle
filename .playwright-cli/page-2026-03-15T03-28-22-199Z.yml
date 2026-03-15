@@ -1,0 +1,667 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e6]:
+      - generic [ref=e7]: ORACLE
+      - generic [ref=e8]: NARRATIVE ARBITRAGE ENGINE
+    - generic [ref=e9]:
+      - generic [ref=e10] [cursor=pointer]: DASHBOARD
+      - generic [ref=e11] [cursor=pointer]: MARKETS
+      - generic [ref=e12] [cursor=pointer]: SIGNALS
+      - generic [ref=e13] [cursor=pointer]: PREDICTIONS
+    - generic [ref=e14]:
+      - generic [ref=e17]: LIVE
+      - generic [ref=e18]: 03:28:21 UTC
+      - button "SCAN NOW" [ref=e19] [cursor=pointer]
+  - generic [ref=e20]:
+    - generic [ref=e21]: SIGNALS
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]: ▲3.3K/hr
+        - text: Israel is running critically low on interceptors, US officials say
+      - generic [ref=e25]:
+        - generic [ref=e26]: ▲1.9K/hr
+        - text: Trump calls on UK and others to send warships to Strait of Hormuz
+      - generic [ref=e27]:
+        - generic [ref=e28]: ▲1.8K/hr
+        - text: Trump Adviser Warns of Possible Israel Nuclear Escalation in Iran Conflict
+      - generic [ref=e29]:
+        - generic [ref=e30]: ▲1.7K/hr
+        - text: "U.K. leader: Trump is ‘losing allies’ and perhaps using war to ‘distract from Ep"
+      - generic [ref=e31]:
+        - generic [ref=e32]: ▲1.1K/hr
+        - text: Secretary Of Defense Hegseth Casually Promises Iranians ‘No Quarter’ – A War Cri
+      - generic [ref=e33]:
+        - generic [ref=e34]: 0.5%
+        - text: US x Iran ceasefire by March 15?
+      - generic [ref=e35]:
+        - generic [ref=e36]: 38.5%
+        - text: Will the Iranian regime fall before 2027?
+      - generic [ref=e37]:
+        - generic [ref=e38]: 99.7%
+        - text: Will Iran strike Israel on March 10?
+      - generic [ref=e39]:
+        - generic [ref=e40]: BBC World
+        - text: BBC visits aftermath of Israeli strike on Lebanon that killed family a
+      - generic [ref=e41]:
+        - generic [ref=e42]: BBC World
+        - text: Three more Iran football team members change minds over asylum
+      - generic [ref=e43]:
+        - generic [ref=e44]: BBC World
+        - text: "'Gruesome' war bets fuel calls for crackdown on prediction markets"
+      - generic [ref=e45]:
+        - generic [ref=e46]: ▲3.3K/hr
+        - text: Israel is running critically low on interceptors, US officials say
+      - generic [ref=e47]:
+        - generic [ref=e48]: ▲1.9K/hr
+        - text: Trump calls on UK and others to send warships to Strait of Hormuz
+      - generic [ref=e49]:
+        - generic [ref=e50]: ▲1.8K/hr
+        - text: Trump Adviser Warns of Possible Israel Nuclear Escalation in Iran Conflict
+      - generic [ref=e51]:
+        - generic [ref=e52]: ▲1.7K/hr
+        - text: "U.K. leader: Trump is ‘losing allies’ and perhaps using war to ‘distract from Ep"
+      - generic [ref=e53]:
+        - generic [ref=e54]: ▲1.1K/hr
+        - text: Secretary Of Defense Hegseth Casually Promises Iranians ‘No Quarter’ – A War Cri
+      - generic [ref=e55]:
+        - generic [ref=e56]: 0.5%
+        - text: US x Iran ceasefire by March 15?
+      - generic [ref=e57]:
+        - generic [ref=e58]: 38.5%
+        - text: Will the Iranian regime fall before 2027?
+      - generic [ref=e59]:
+        - generic [ref=e60]: 99.7%
+        - text: Will Iran strike Israel on March 10?
+      - generic [ref=e61]:
+        - generic [ref=e62]: BBC World
+        - text: BBC visits aftermath of Israeli strike on Lebanon that killed family a
+      - generic [ref=e63]:
+        - generic [ref=e64]: BBC World
+        - text: Three more Iran football team members change minds over asylum
+      - generic [ref=e65]:
+        - generic [ref=e66]: BBC World
+        - text: "'Gruesome' war bets fuel calls for crackdown on prediction markets"
+  - main [ref=e67]:
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - generic [ref=e70]:
+          - generic [ref=e71]: ◆
+          - text: ACTIVE PREDICTION
+          - generic [ref=e72]: "2"
+        - generic [ref=e73]: 2026-03-15
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic [ref=e78]: BUY NO
+              - generic [ref=e79]: Confidence 78%
+            - generic [ref=e80]:
+              - generic [ref=e81]: "PREDICTION #1"
+              - link "US x Iran Ceasefire by March 31 ↗" [ref=e82] [cursor=pointer]:
+                - /url: https://polymarket.com/market/us-x-iran-ceasefire-by-march-31
+            - generic [ref=e83]:
+              - generic [ref=e84]: EDGE
+              - generic [ref=e85]: 7%
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - generic [ref=e88]: POLYMARKET NOW
+              - generic [ref=e89]:
+                - generic [ref=e90]: 15¢ YES
+                - generic [ref=e91]: 85¢ NO
+            - generic [ref=e95]:
+              - generic [ref=e96]: ORACLE SAYS
+              - generic [ref=e97]: 8% fair value YES
+              - generic [ref=e98]: "\"No Ceasefire — escalation has no off-ramp in 16 days\""
+            - generic [ref=e99]:
+              - generic [ref=e100]: TRADE DETAILS
+              - generic [ref=e101]:
+                - text: "Entry: 15¢ (Yes)"
+                - text: "Target: 12-13¢ (Yes) → 87-88¢ (No)"
+              - link "TRADE ON POLYMARKET ↗" [ref=e102] [cursor=pointer]:
+                - /url: https://polymarket.com/market/us-x-iran-ceasefire-by-march-31
+          - generic [ref=e104]:
+            - generic [ref=e105]: LIVE PRICE vs ORACLE ESTIMATE
+            - generic [ref=e106]:
+              - generic [ref=e107]: LIVE
+              - generic [ref=e109]: ORACLE
+        - generic [ref=e112]:
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - generic [ref=e115]: BUY YES
+              - generic [ref=e116]: Confidence 62%
+            - generic [ref=e117]:
+              - generic [ref=e118]: "PREDICTION #2"
+              - link "Will Crude Oil (CL) hit $120 by end of March? ↗" [ref=e119] [cursor=pointer]:
+                - /url: https://polymarket.com/market/will-crude-oil-cl-hit-high-120-by-end-of-march-766-813-597
+            - generic [ref=e120]:
+              - generic [ref=e121]: EDGE
+              - generic [ref=e122]: 7%
+          - generic [ref=e123]:
+            - generic [ref=e124]:
+              - generic [ref=e125]: POLYMARKET NOW
+              - generic [ref=e126]:
+                - generic [ref=e127]: 45¢ YES
+                - generic [ref=e128]: 55¢ NO
+            - generic [ref=e132]:
+              - generic [ref=e133]: ORACLE SAYS
+              - generic [ref=e134]: 52% fair value YES
+              - generic [ref=e135]: "\"Oil hits $120\" wins narrowly"
+            - generic [ref=e136]:
+              - generic [ref=e137]: TRADE DETAILS
+              - generic [ref=e138]:
+                - text: "Entry: 45¢ (Yes)"
+                - text: "Target: 53-58¢ (Yes) in 48 hours"
+              - link "TRADE ON POLYMARKET ↗" [ref=e139] [cursor=pointer]:
+                - /url: https://polymarket.com/market/will-crude-oil-cl-hit-high-120-by-end-of-march-766-813-597
+          - generic [ref=e141]:
+            - generic [ref=e142]: LIVE PRICE vs ORACLE ESTIMATE
+            - generic [ref=e143]:
+              - generic [ref=e144]: LIVE
+              - generic [ref=e146]: ORACLE
+    - generic [ref=e149]:
+      - generic [ref=e151]:
+        - generic [ref=e152]: ◆
+        - text: POLYMARKET — SENTIMENT MARKETS
+        - generic [ref=e153]: "30"
+      - generic [ref=e154]:
+        - generic [ref=e155] [cursor=pointer]:
+          - generic "US x Iran ceasefire by March 15?" [ref=e156]: US x Iran ceasefire by March 15? ↗
+          - generic [ref=e157]:
+            - generic [ref=e158]: 0.5%
+            - generic [ref=e159]: 99.5%
+          - generic [ref=e160]: $10.0M
+        - generic [ref=e161] [cursor=pointer]:
+          - generic "Will the Iranian regime fall before 2027?" [ref=e162]: Will the Iranian regime fall before 2027? ↗
+          - generic [ref=e163]:
+            - generic [ref=e164]: 38.5%
+            - generic [ref=e165]: 61.5%
+          - generic [ref=e166]: $9.8M
+        - generic [ref=e167] [cursor=pointer]:
+          - generic "Will Iran strike Israel on March 10?" [ref=e168]: Will Iran strike Israel on March 10? ↗
+          - generic [ref=e169]:
+            - generic [ref=e170]: 99.7%
+            - generic [ref=e171]: 0.4%
+          - generic [ref=e172]: $9.7M
+        - generic [ref=e173] [cursor=pointer]:
+          - generic "Will Crude Oil (CL) hit (HIGH) $140 by end of March?" [ref=e174]: Will Crude Oil (CL) hit (HIGH) $140 by end of March? ↗
+          - generic [ref=e175]:
+            - generic [ref=e176]: 20.5%
+            - generic [ref=e177]: 79.5%
+          - generic [ref=e178]: $986K
+        - generic [ref=e179] [cursor=pointer]:
+          - generic "Will Crude Oil (CL) hit (HIGH) $140 by end of March?" [ref=e180]: Will Crude Oil (CL) hit (HIGH) $140 by end of March? ↗
+          - generic [ref=e181]:
+            - generic [ref=e182]: 20.5%
+            - generic [ref=e183]: 79.5%
+          - generic [ref=e184]: $986K
+        - generic [ref=e185] [cursor=pointer]:
+          - generic "US x Iran ceasefire by June 30?" [ref=e186]: US x Iran ceasefire by June 30? ↗
+          - generic [ref=e187]:
+            - generic [ref=e188]: 59.5%
+            - generic [ref=e189]: 40.5%
+          - generic [ref=e190]: $984K
+        - generic [ref=e191] [cursor=pointer]:
+          - 'generic "2026 Balance of Power: D Senate, D House" [ref=e192]': "2026 Balance of Power: D Senate, D House ↗"
+          - generic [ref=e193]:
+            - generic [ref=e194]: 48.5%
+            - generic [ref=e195]: 51.5%
+          - generic [ref=e196]: $980K
+        - generic [ref=e197] [cursor=pointer]:
+          - generic "Will Jasmine Crockett and Ken Paxton be the candidates for the Texas Senate Election?" [ref=e198]: Will Jasmine Crockett and Ken Paxton be the candidates for the Texas Senate Election? ↗
+          - generic [ref=e199]:
+            - generic [ref=e200]: 0.5%
+            - generic [ref=e201]: 99.5%
+          - generic [ref=e202]: $99K
+        - generic [ref=e203] [cursor=pointer]:
+          - generic "Will Enrique Valderrama win the 2026 Peruvian presidential election?" [ref=e204]: Will Enrique Valderrama win the 2026 Peruvian presidential election? ↗
+          - generic [ref=e205]:
+            - generic [ref=e206]: 0.4%
+            - generic [ref=e207]: 99.7%
+          - generic [ref=e208]: $98K
+        - generic [ref=e209] [cursor=pointer]:
+          - generic "Will the Bank of Brazil decrease the Selic rate after March 2026 meeting?" [ref=e210]: Will the Bank of Brazil decrease the Selic rate after March 2026 meeting? ↗
+          - generic [ref=e211]:
+            - generic [ref=e212]: 76.8%
+            - generic [ref=e213]: 23.2%
+          - generic [ref=e214]: $98K
+        - generic [ref=e215] [cursor=pointer]:
+          - generic "OpenAI receives federal backstop for infrastructure before July?" [ref=e216]: OpenAI receives federal backstop for infrastructure before July? ↗
+          - generic [ref=e217]:
+            - generic [ref=e218]: 5.7%
+            - generic [ref=e219]: 94.3%
+          - generic [ref=e220]: $98K
+        - generic [ref=e221] [cursor=pointer]:
+          - generic "Military action against Iran ends on March 20, 2026?" [ref=e222]: Military action against Iran ends on March 20, 2026? ↗
+          - generic [ref=e223]:
+            - generic [ref=e224]: 1.1%
+            - generic [ref=e225]: 98.9%
+          - generic [ref=e226]: $97K
+        - generic [ref=e227] [cursor=pointer]:
+          - generic "Will António Guterres win the Nobel Peace Prize in 2026?" [ref=e228]: Will António Guterres win the Nobel Peace Prize in 2026? ↗
+          - generic [ref=e229]:
+            - generic [ref=e230]: 2.5%
+            - generic [ref=e231]: 97.5%
+          - generic [ref=e232]: $95K
+        - generic [ref=e233] [cursor=pointer]:
+          - generic "Will the Republican Party hold 57 or more Senate seats after the 2026 midterm elections?" [ref=e234]: Will the Republican Party hold 57 or more Senate seats after the 2026 midterm elections? ↗
+          - generic [ref=e235]:
+            - generic [ref=e236]: 1.3%
+            - generic [ref=e237]: 98.7%
+          - generic [ref=e238]: $10K
+        - generic [ref=e239] [cursor=pointer]:
+          - generic "Will Thunder Parley advance from the 2026 California Governor primary election?" [ref=e240]: Will Thunder Parley advance from the 2026 California Governor primary election? ↗
+          - generic [ref=e241]:
+            - generic [ref=e242]: 1.6%
+            - generic [ref=e243]: 98.5%
+          - generic [ref=e244]: $10K
+        - generic [ref=e245] [cursor=pointer]:
+          - generic "Will Doug Bennett be the Republican nominee for Senate in Illinois?" [ref=e246]: Will Doug Bennett be the Republican nominee for Senate in Illinois? ↗
+          - generic [ref=e247]:
+            - generic [ref=e248]: 0.5%
+            - generic [ref=e249]: 99.5%
+          - generic [ref=e250]: $10K
+        - generic [ref=e251] [cursor=pointer]:
+          - generic "Will Bryce Reeves be the Republican nominee for Senate in Virginia?" [ref=e252]: Will Bryce Reeves be the Republican nominee for Senate in Virginia? ↗
+          - generic [ref=e253]:
+            - generic [ref=e254]: 0.5%
+            - generic [ref=e255]: 99.5%
+          - generic [ref=e256]: $10K
+        - generic [ref=e257] [cursor=pointer]:
+          - generic "Will the Green Party (MP) win the most seats in the 2026 Swedish parliamentary election?" [ref=e258]: Will the Green Party (MP) win the most seats in the 2026 Swedish parliamentary election? ↗
+          - generic [ref=e259]:
+            - generic [ref=e260]: 1.6%
+            - generic [ref=e261]: 98.5%
+          - generic [ref=e262]: $10K
+        - generic [ref=e263] [cursor=pointer]:
+          - generic "Will Juan Carlos Pinzón win the 1st round of the 2026 Colombian presidential election?" [ref=e264]: Will Juan Carlos Pinzón win the 1st round of the 2026 Colombian presidential election? ↗
+          - generic [ref=e265]:
+            - generic [ref=e266]: 0.4%
+            - generic [ref=e267]: 99.6%
+          - generic [ref=e268]: $10K
+        - generic [ref=e269] [cursor=pointer]:
+          - 'generic "ODI Series Bangladesh vs Pakistan: Bangladesh vs Pakistan" [ref=e270]': "ODI Series Bangladesh vs Pakistan: Bangladesh vs Pakistan ↗"
+          - generic [ref=e271]:
+            - generic [ref=e272]: 42.5%
+            - generic [ref=e273]: 57.5%
+          - generic [ref=e274]: $10K
+        - generic [ref=e275] [cursor=pointer]:
+          - generic "Will Crude Oil (CL) hit (LOW) $35 by end of June?" [ref=e276]: Will Crude Oil (CL) hit (LOW) $35 by end of June? ↗
+          - generic [ref=e277]:
+            - generic [ref=e278]: 2.5%
+            - generic [ref=e279]: 97.5%
+          - generic [ref=e280]: $10K
+        - generic [ref=e281] [cursor=pointer]:
+          - generic "Will Ann Diener win the Alaska Senate race in 2026?" [ref=e282]: Will Ann Diener win the Alaska Senate race in 2026? ↗
+          - generic [ref=e283]:
+            - generic [ref=e284]: 0.9%
+            - generic [ref=e285]: 99.1%
+          - generic [ref=e286]: $10K
+        - generic [ref=e287] [cursor=pointer]:
+          - generic "Will the Fed Pause–Cut–Pause in the next three decisions (Jan–Mar–Apr)?" [ref=e288]: Will the Fed Pause–Cut–Pause in the next three decisions (Jan–Mar–Apr)? ↗
+          - generic [ref=e289]:
+            - generic [ref=e290]: 0.5%
+            - generic [ref=e291]: 99.5%
+          - generic [ref=e292]: $10K
+        - generic [ref=e293] [cursor=pointer]:
+          - generic "Will the Communist Party of India (Marxist) (CPI(M)) win the most seats in the 2026 West Bengal Legislative Assembly election?" [ref=e294]: Will the Communist Party of India (Marxist) (CPI(M)) win the most seats in the 2026 West Bengal Legislative Assembly election? ↗
+          - generic [ref=e295]:
+            - generic [ref=e296]: 0.1%
+            - generic [ref=e297]: 99.9%
+          - generic [ref=e298]: $10K
+        - generic [ref=e299] [cursor=pointer]:
+          - generic "Right-Wing Wave in French Mayoral Elections?" [ref=e300]: Right-Wing Wave in French Mayoral Elections? ↗
+          - generic [ref=e301]:
+            - generic [ref=e302]: 5.3%
+            - generic [ref=e303]: 94.7%
+          - generic [ref=e304]: $1K
+        - generic [ref=e305] [cursor=pointer]:
+          - generic "Will the Republicans win the Kentucky Senate race in 2026?" [ref=e306]: Will the Republicans win the Kentucky Senate race in 2026? ↗
+          - generic [ref=e307]:
+            - generic [ref=e308]: 90.5%
+            - generic [ref=e309]: 9.5%
+          - generic [ref=e310]: $1K
+        - generic [ref=e311] [cursor=pointer]:
+          - generic "Will Matt Claman advance from the 2026 Alaska Governor primary election?" [ref=e312]: Will Matt Claman advance from the 2026 Alaska Governor primary election? ↗
+          - generic [ref=e313]:
+            - generic [ref=e314]: 8.5%
+            - generic [ref=e315]: 91.5%
+          - generic [ref=e316]: $1K
+        - generic [ref=e317] [cursor=pointer]:
+          - generic "Will Ogen Driskill win the 2026 Wyoming Governor Republican primary election?" [ref=e318]: Will Ogen Driskill win the 2026 Wyoming Governor Republican primary election? ↗
+          - generic [ref=e319]:
+            - generic [ref=e320]: 0.9%
+            - generic [ref=e321]: 99.1%
+          - generic [ref=e322]: $1K
+        - generic [ref=e323] [cursor=pointer]:
+          - generic "Will Morgan Murphy be the Republican nominee for Senate in Alabama?" [ref=e324]: Will Morgan Murphy be the Republican nominee for Senate in Alabama? ↗
+          - generic [ref=e325]:
+            - generic [ref=e326]: 0.9%
+            - generic [ref=e327]: 99.1%
+          - generic [ref=e328]: $1K
+        - generic [ref=e329] [cursor=pointer]:
+          - generic "Will Ken Paxton win the Texas Republican Senate Primary runoff by between 6% and 9%?" [ref=e330]: Will Ken Paxton win the Texas Republican Senate Primary runoff by between 6% and 9%? ↗
+          - generic [ref=e331]:
+            - generic [ref=e332]: 13%
+            - generic [ref=e333]: 87%
+          - generic [ref=e334]: $1K
+    - generic [ref=e335]:
+      - generic [ref=e337]:
+        - generic [ref=e338]: ◆
+        - text: ECONOMIC DATA
+        - generic [ref=e339]: "6"
+      - generic [ref=e340]:
+        - generic [ref=e341]:
+          - generic [ref=e342]:
+            - generic [ref=e343]: Unemployment Rate
+            - generic [ref=e344]: 2026-02-01
+          - generic [ref=e345]:
+            - generic [ref=e346]: "4.40"
+            - generic [ref=e347]: ▲
+            - generic [ref=e348]: "+0.10"
+        - generic [ref=e349]:
+          - generic [ref=e350]:
+            - generic [ref=e351]: Consumer Price Index
+            - generic [ref=e352]: 2026-02-01
+          - generic [ref=e353]:
+            - generic [ref=e354]: "327.5"
+            - generic [ref=e355]: ▲
+            - generic [ref=e356]: "+0.87"
+        - generic [ref=e357]:
+          - generic [ref=e358]:
+            - generic [ref=e359]: Consumer Sentiment
+            - generic [ref=e360]: 2026-01-01
+          - generic [ref=e361]:
+            - generic [ref=e362]: "56.40"
+            - generic [ref=e363]: ▲
+            - generic [ref=e364]: "+3.50"
+        - generic [ref=e365]:
+          - generic [ref=e366]:
+            - generic [ref=e367]: Federal Funds Rate
+            - generic [ref=e368]: 2026-02-01
+          - generic [ref=e369]:
+            - generic [ref=e370]: "3.64"
+            - generic [ref=e371]: ●
+            - generic [ref=e372]: "0.00"
+        - generic [ref=e373]:
+          - generic [ref=e374]:
+            - generic [ref=e375]: WTI Crude Oil
+            - generic [ref=e376]: 2026-03-09
+          - generic [ref=e377]:
+            - generic [ref=e378]: "94.65"
+            - generic [ref=e379]: ▲
+            - generic [ref=e380]: "+3.88"
+        - generic [ref=e381]:
+          - generic [ref=e382]:
+            - generic [ref=e383]: Yield Curve (10Y-2Y)
+            - generic [ref=e384]: 2026-03-13
+          - generic [ref=e385]:
+            - generic [ref=e386]: "0.55"
+            - generic [ref=e387]: ▲
+            - generic [ref=e388]: "+0.04"
+    - generic [ref=e389]:
+      - generic [ref=e391]:
+        - generic [ref=e392]: ◆
+        - text: REDDIT — VELOCITY TRACKER
+        - generic [ref=e393]: "25"
+      - generic [ref=e394]:
+        - generic [ref=e395]:
+          - generic [ref=e398]: 3.3K
+          - generic "Israel is running critically low on interceptors, US officials say" [ref=e399]
+          - generic [ref=e400]: r/worldnews
+          - generic [ref=e401]: 16.0K ▲
+        - generic [ref=e402]:
+          - generic [ref=e405]: 1.9K
+          - generic "Trump calls on UK and others to send warships to Strait of Hormuz" [ref=e406]
+          - generic [ref=e407]: r/worldnews
+          - generic [ref=e408]: 17.0K ▲
+        - generic [ref=e409]:
+          - generic [ref=e412]: 1.8K
+          - generic "Trump Adviser Warns of Possible Israel Nuclear Escalation in Iran Conflict" [ref=e413]
+          - generic [ref=e414]: r/politics
+          - generic [ref=e415]: 10.4K ▲
+        - generic [ref=e416]:
+          - generic [ref=e419]: 1.7K
+          - 'generic "U.K. leader: Trump is ‘losing allies’ and perhaps using war to ‘distract from Epstein files’" [ref=e420]'
+          - generic [ref=e421]: r/politics
+          - generic [ref=e422]: 12.9K ▲
+        - generic [ref=e423]:
+          - generic [ref=e426]: 1.1K
+          - generic "Secretary Of Defense Hegseth Casually Promises Iranians ‘No Quarter’ – A War Crime" [ref=e427]
+          - generic [ref=e428]: r/politics
+          - generic [ref=e429]: 9.5K ▲
+        - generic [ref=e430]:
+          - generic [ref=e433]: 1.1K
+          - generic "Trump's FCC Chair Threatens to Pull Broadcast Licenses Over Negative Iran War Coverage" [ref=e434]
+          - generic [ref=e435]: r/politics
+          - generic [ref=e436]: 3.6K ▲
+        - generic [ref=e437]:
+          - generic [ref=e440]: 1.1K
+          - generic "The last person we need help from is Zelenskyy - Trump" [ref=e441]
+          - generic [ref=e442]: r/worldnews
+          - generic [ref=e443]: 1.0K ▲
+        - generic [ref=e444]:
+          - generic [ref=e447]: 1.0K
+          - generic "Drones attack one of the world's largest oil terminals in the UAE" [ref=e448]
+          - generic [ref=e449]: r/worldnews
+          - generic [ref=e450]: 13.7K ▲
+        - generic [ref=e451]:
+          - generic [ref=e454]: "978"
+          - generic "Thanks for the tip, WSB. Just got back from the bank. Can't wait for the novelty of using these while simultaneously deflating our currency." [ref=e455]
+          - generic [ref=e456]: r/wallstreetbets
+          - generic [ref=e457]: 8.9K ▲
+        - generic [ref=e458]:
+          - generic [ref=e461]: "928"
+          - generic "Which one of yall is this?" [ref=e462]
+          - generic [ref=e463]: r/wallstreetbets
+          - generic [ref=e464]: 129 ▲
+        - generic [ref=e465]:
+          - generic [ref=e468]: "852"
+          - 'generic "2 DOGE staffers say ''no'' regrets for people losing income, didn''t reduce the deficit: Depositions" [ref=e469]'
+          - generic [ref=e470]: r/politics
+          - generic [ref=e471]: 11.5K ▲
+        - generic [ref=e472]:
+          - generic [ref=e475]: "809"
+          - generic "this would make my weekend" [ref=e476]
+          - generic [ref=e477]: r/wallstreetbets
+          - generic [ref=e478]: 18.9K ▲
+        - generic [ref=e479]:
+          - generic [ref=e482]: "758"
+          - generic "Dems Flip Red State Stronghold in Humiliation for Trump" [ref=e483]
+          - generic [ref=e484]: r/politics
+          - generic [ref=e485]: 9.4K ▲
+        - generic [ref=e486]:
+          - generic [ref=e489]: "676"
+          - 'generic "‘No one thinks we’re keeping the majority’: House Republicans fear they’re losing" [ref=e490]'
+          - generic [ref=e491]: r/politics
+          - generic [ref=e492]: 3.7K ▲
+        - generic [ref=e493]:
+          - generic [ref=e496]: "647"
+          - generic "82 million can't afford health care, but Hegseth gets lobster | Opinion" [ref=e497]
+          - generic [ref=e498]: r/politics
+          - generic [ref=e499]: 3.9K ▲
+        - generic [ref=e500]:
+          - generic [ref=e503]: "593"
+          - generic "Judge blocks subpoenas against Fed Chair Jerome Powell, citing 'essentially zero evidence'" [ref=e504]
+          - generic [ref=e505]: r/wallstreetbets
+          - generic [ref=e506]: 18.1K ▲
+        - generic [ref=e507]:
+          - generic [ref=e510]: "510"
+          - generic "Iran, not the US, currently has the strategic upper hand" [ref=e511]
+          - generic [ref=e512]: r/politics
+          - generic [ref=e513]: 1.7K ▲
+        - generic [ref=e514]:
+          - generic [ref=e517]: "508"
+          - generic "US attacks Iran's Kharg Island, neutralizing the defenses. In preparation for a possible ground operation and occupation." [ref=e518]
+          - generic [ref=e519]: r/wallstreetbets
+          - generic [ref=e520]: 11.3K ▲
+        - generic [ref=e521]:
+          - generic [ref=e524]: "500"
+          - generic "Democrats’ Chances of Flipping Senate and House This Year Hit Record High" [ref=e525]
+          - generic [ref=e526]: r/politics
+          - generic [ref=e527]: 2.9K ▲
+        - generic [ref=e528]:
+          - generic [ref=e531]: "481"
+          - 'generic "Majority of Americans approve of Noem firing: Poll" [ref=e532]'
+          - generic [ref=e533]: r/politics
+          - generic [ref=e534]: 1.1K ▲
+        - generic [ref=e535]:
+          - generic [ref=e538]: "447"
+          - generic "Flyers with Jeffrey Epstein’s Face Alleging Trump Raped Children Found in Hollywood" [ref=e539]
+          - generic [ref=e540]: r/politics
+          - generic [ref=e541]: 2.0K ▲
+        - generic [ref=e542]:
+          - generic [ref=e545]: "438"
+          - generic "Billionaire Trump Demands TSA Keep Working Without Pay" [ref=e546]
+          - generic [ref=e547]: r/politics
+          - generic [ref=e548]: 4.2K ▲
+        - generic [ref=e549]:
+          - generic [ref=e552]: "419"
+          - generic "Italy ruling tells millions with Italian roots they have lost the right to citizenship" [ref=e553]
+          - generic [ref=e554]: r/worldnews
+          - generic [ref=e555]: 5.1K ▲
+        - generic [ref=e556]:
+          - generic [ref=e559]: "414"
+          - 'generic "Outlook for young Americans ''really awful'' as Trump’s ''SOL'' economy takes hold: conservatives" [ref=e560]'
+          - generic [ref=e561]: r/economics
+          - generic [ref=e562]: 271 ▲
+        - generic [ref=e563]:
+          - generic [ref=e566]: "410"
+          - generic "Trump administration to be paid $10bn for brokering TikTok deal" [ref=e567]
+          - generic [ref=e568]: r/politics
+          - generic [ref=e569]: 3.1K ▲
+    - generic [ref=e570]:
+      - generic [ref=e572]:
+        - generic [ref=e573]: ◆
+        - text: NEWS FEED
+        - generic [ref=e574]: "40"
+      - generic [ref=e575]:
+        - generic [ref=e576] [cursor=pointer]:
+          - generic [ref=e577]: BBC World
+          - generic [ref=e578]: BBC visits aftermath of Israeli strike on Lebanon that killed family as IDF targets Hezbollah
+        - generic [ref=e579] [cursor=pointer]:
+          - generic [ref=e580]: BBC World
+          - generic [ref=e581]: Three more Iran football team members change minds over asylum
+        - generic [ref=e582] [cursor=pointer]:
+          - generic [ref=e583]: BBC World
+          - generic [ref=e584]: "'Gruesome' war bets fuel calls for crackdown on prediction markets"
+        - generic [ref=e585] [cursor=pointer]:
+          - generic [ref=e586]: BBC World
+          - generic [ref=e587]: Hamas urges key ally Iran to halt attacks on Gulf states
+        - generic [ref=e588] [cursor=pointer]:
+          - generic [ref=e589]: BBC World
+          - generic [ref=e590]: Cuban protesters ransack Communist office as energy crisis deepens
+        - generic [ref=e591] [cursor=pointer]:
+          - generic [ref=e592]: BBC World
+          - generic [ref=e593]: Iraq taking private plane to Mexico for World Cup play-off
+        - generic [ref=e594] [cursor=pointer]:
+          - generic [ref=e595]: BBC World
+          - generic [ref=e596]: Treasure hunter freed from prison after refusing to turn over shipwreck gold
+        - generic [ref=e597] [cursor=pointer]:
+          - generic [ref=e598]: BBC World
+          - generic [ref=e599]: Russia exploiting Iran war, Zelensky says after fresh bombardment
+        - generic [ref=e600] [cursor=pointer]:
+          - generic [ref=e601]: BBC World
+          - generic [ref=e602]: Rescuers blame weather and 'underprepared skiers' for rise in Alps avalanche deaths
+        - generic [ref=e603] [cursor=pointer]:
+          - generic [ref=e604]: BBC World
+          - generic [ref=e605]: Explosion at Amsterdam Jewish school 'a deliberate attack' says mayor
+        - generic [ref=e606] [cursor=pointer]:
+          - generic [ref=e607]: NPR News
+          - generic [ref=e608]: Why the Chicago Bears could be moving to Indiana
+        - generic [ref=e609] [cursor=pointer]:
+          - generic [ref=e610]: NPR News
+          - generic [ref=e611]: Pentagon tightens controls over Stars and Stripes after calling it "woke"
+        - generic [ref=e612] [cursor=pointer]:
+          - generic [ref=e613]: NPR News
+          - generic [ref=e614]: Russian strike on Kyiv region kills 4 and wounds 15, with peace talks stalled
+        - generic [ref=e615] [cursor=pointer]:
+          - generic [ref=e616]: NPR News
+          - generic [ref=e617]: In South Carolina, measles shows how far apart neighbors can be on vaccines
+        - generic [ref=e618] [cursor=pointer]:
+          - generic [ref=e619]: NPR News
+          - generic [ref=e620]: Brazil's ex-President Bolsonaro is in intensive care with pneumonia, hospital says
+        - generic [ref=e621] [cursor=pointer]:
+          - generic [ref=e622]: NPR News
+          - generic [ref=e623]: "Opinion: An ancient, sophisticated palate"
+        - generic [ref=e624] [cursor=pointer]:
+          - generic [ref=e625]: NPR News
+          - generic [ref=e626]: Why women have an especially tough time in Senegal's prisons
+        - generic [ref=e627] [cursor=pointer]:
+          - generic [ref=e628]: NPR News
+          - generic [ref=e629]: With boom in prediction markets, some lawmakers worry about how to police themselves
+        - generic [ref=e630] [cursor=pointer]:
+          - generic [ref=e631]: NPR News
+          - generic [ref=e632]: U.S. Embassy in Baghdad again urges Americans to leave Iraq as Trump touts strikes on Iran
+        - generic [ref=e633] [cursor=pointer]:
+          - generic [ref=e634]: NPR News
+          - generic [ref=e635]: Reframing Georgia O'Keeffe's legacy and protecting the land she loved
+        - generic [ref=e636] [cursor=pointer]:
+          - generic [ref=e637]: Al Jazeera
+          - generic [ref=e638]: "Iran war live: Trump urges allies to keep Hormuz open amid Gulf attacks"
+        - generic [ref=e639] [cursor=pointer]:
+          - generic [ref=e640]: Al Jazeera
+          - generic [ref=e641]: Pakistan strikes Afghan base after its president warns ‘red line’ crossed
+        - generic [ref=e642] [cursor=pointer]:
+          - generic [ref=e643]: Al Jazeera
+          - generic [ref=e644]: Brazil’s jailed ex-president Bolsonaro hospitalised with lung infection
+        - generic [ref=e645] [cursor=pointer]:
+          - generic [ref=e646]: Al Jazeera
+          - generic [ref=e647]: Bahrain and Saudi Arabia F1 race cancellations confirmed due to Iran war
+        - generic [ref=e648] [cursor=pointer]:
+          - generic [ref=e649]: Al Jazeera
+          - generic [ref=e650]: Man City held at West Ham to lose ground on Premier League leaders Arsenal
+        - generic [ref=e651] [cursor=pointer]:
+          - generic [ref=e652]: Al Jazeera
+          - generic [ref=e653]: Trinidad and Tobago extends state of emergency for another three months
+        - generic [ref=e654] [cursor=pointer]:
+          - generic [ref=e655]: Al Jazeera
+          - generic [ref=e656]: Real Madrid beat Elche to pressure Barcelona for La Liga title
+        - generic [ref=e657] [cursor=pointer]:
+          - generic [ref=e658]: Al Jazeera
+          - generic [ref=e659]: US-Israeli strike kills 15 at Isfahan factory, Iranian media says
+        - generic [ref=e660] [cursor=pointer]:
+          - generic [ref=e661]: Al Jazeera
+          - generic [ref=e662]: Thousands in Madrid protest ‘forgotten’ Gaza, warn Iran war may spiral into
+        - generic [ref=e663] [cursor=pointer]:
+          - generic [ref=e664]: Al Jazeera
+          - generic [ref=e665]: Hundreds protest against US-Israeli strikes on Iran in Seoul
+        - generic [ref=e666] [cursor=pointer]:
+          - generic [ref=e667]: The Guardian
+          - generic [ref=e668]: France returns sacred talking drum looted from Côte d’Ivoire over 100 years ago
+        - generic [ref=e669] [cursor=pointer]:
+          - generic [ref=e670]: The Guardian
+          - generic [ref=e671]: Eswatini says it received more ‘third country’ deportees as part of deal with Trump administration
+        - generic [ref=e672] [cursor=pointer]:
+          - generic [ref=e673]: The Guardian
+          - generic [ref=e674]: UK government axes flagship global health project
+        - generic [ref=e675] [cursor=pointer]:
+          - generic [ref=e676]: The Guardian
+          - generic [ref=e677]: ‘Invasive’ AI-led mass surveillance in Africa violating freedoms, warn experts
+        - generic [ref=e678] [cursor=pointer]:
+          - generic [ref=e679]: The Guardian
+          - generic [ref=e680]: At least 17 killed after drone strikes school in Sudan
+        - generic [ref=e681] [cursor=pointer]:
+          - generic [ref=e682]: The Guardian
+          - generic [ref=e683]: Five arrested in Cuba after protest at local Communist party office
+        - generic [ref=e684] [cursor=pointer]:
+          - generic [ref=e685]: The Guardian
+          - generic [ref=e686]: Bolivia arrests alleged drug kingpin accused of putting hit on Paraguayan prosecutor
+        - generic [ref=e687] [cursor=pointer]:
+          - generic [ref=e688]: The Guardian
+          - generic [ref=e689]: An environmental activist and her family escaped death threats in Honduras. ICE deported her husband anyway
+        - generic [ref=e690] [cursor=pointer]:
+          - generic [ref=e691]: The Guardian
+          - generic [ref=e692]: Cuban president confirms talks with Trump officials amid US blockade
+        - generic [ref=e693] [cursor=pointer]:
+          - generic [ref=e694]: The Guardian
+          - generic [ref=e695]: King Charles concerned about Alberta separatist movement, First Nation chief says
+  - contentinfo [ref=e696]:
+    - generic [ref=e697]:
+      - generic [ref=e700]: MARKETS
+      - generic [ref=e703]: REDDIT
+      - generic [ref=e706]: NEWS
+      - generic [ref=e709]: FRED
+    - generic [ref=e710]:
+      - generic [ref=e711]: "SCANS: 9"
+      - generic [ref=e712]: "LAST: 4:26:20 AM"
+      - generic [ref=e713]: "ERRORS: 0"
