@@ -1,5 +1,6 @@
 """ORACLE — News RSS Aggregator
 Pulls headlines from major news sources for event detection.
+Uses feedparser when available, falls back to manual XML parsing.
 """
 
 import hashlib
@@ -9,23 +10,78 @@ from config import *
 NEWS_LOG = DATA_DIR / "news_feed.jsonl"
 SEEN_HASHES = set()
 
+# Try to import feedparser for robust parsing
+try:
+    import feedparser
+    HAS_FEEDPARSER = True
+except ImportError:
+    HAS_FEEDPARSER = False
+
+
+# Override RSS_FEEDS with known-working feeds
+WORKING_FEEDS = {
+    "BBC World": "http://feeds.bbci.co.uk/news/world/rss.xml",
+    "NPR News": "https://feeds.npr.org/1001/rss.xml",
+    "Al Jazeera EN": "https://www.aljazeera.com/xml/rss/all.xml",
+    "The Guardian": "https://www.theguardian.com/world/rss",
+    "AP News": "https://rss.app/feeds/v1.1/ts68GwgOcyEkoxMl.xml",
+    "Reuters": "https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best",
+}
+
+
+def parse_feed_feedparser(url: str, source_name: str) -> list:
+    """Parse RSS feed using feedparser library."""
+    try:
+        feed = feedparser.parse(url)
+        if feed.bozo and not feed.entries:
+            print(f"  {source_name}: feedparser error, trying manual parse")
+            return parse_feed_manual(url, source_name)
+        items = []
+        for entry in feed.entries[:10]:
+            title = entry.get("title", "").strip()
+            if not title:
+                continue
+            desc = entry.get("summary", entry.get("description", ""))
+            if desc:
+                import re as _re
+                desc = _re.sub(r'<[^>]+>', '', desc).strip()[:300]
+            items.append({
+                "source": source_name,
+                "title": title,
+                "description": desc or "",
+                "url": entry.get("link", ""),
+                "published": entry.get("published", entry.get("updated", "")),
+            })
+        return items
+    except Exception as e:
+        print(f"  {source_name} feedparser failed: {e}")
+        return parse_feed_manual(url, source_name)
+
 
 def parse_feed_manual(url: str, source_name: str) -> list:
     """Parse RSS feed using simple XML extraction (no feedparser dependency)."""
     try:
-        resp = requests.get(url, timeout=10, headers={"User-Agent": REDDIT_UA})
+        resp = requests.get(url, timeout=15, headers={
+            "User-Agent": REDDIT_UA,
+            "Accept": "application/rss+xml, application/xml, text/xml, */*",
+        })
+        if resp.status_code == 403:
+            print(f"  {source_name}: 403 Forbidden (blocked)")
+            return []
+        if resp.status_code == 404:
+            print(f"  {source_name}: 404 Not Found")
+            return []
         resp.raise_for_status()
         text = resp.text
         items = []
-        
-        # Simple XML parsing for <item> or <entry> tags
+
         import re
         # Try RSS format (<item>)
         item_blocks = re.findall(r'<item>(.*?)</item>', text, re.DOTALL)
         if not item_blocks:
             # Try Atom format (<entry>)
             item_blocks = re.findall(r'<entry>(.*?)</entry>', text, re.DOTALL)
-        
+
         for block in item_blocks[:10]:
             title_match = re.search(r'<title[^>]*>(.*?)</title>', block, re.DOTALL)
             desc_match = re.search(r'<description[^>]*>(.*?)</description>', block, re.DOTALL)
@@ -37,23 +93,23 @@ def parse_feed_manual(url: str, source_name: str) -> list:
             pub_match = re.search(r'<pubDate>(.*?)</pubDate>', block, re.DOTALL)
             if not pub_match:
                 pub_match = re.search(r'<published>(.*?)</published>', block, re.DOTALL)
-            
+
             title = title_match.group(1).strip() if title_match else ""
             # Strip CDATA and HTML tags
             title = re.sub(r'<!\[CDATA\[|\]\]>', '', title)
             title = re.sub(r'<[^>]+>', '', title).strip()
-            
+
             desc = desc_match.group(1).strip()[:300] if desc_match else ""
             desc = re.sub(r'<!\[CDATA\[|\]\]>', '', desc)
             desc = re.sub(r'<[^>]+>', '', desc).strip()
-            
+
             link = ""
             if link_match:
                 link = link_match.group(1).strip()
                 link = re.sub(r'<!\[CDATA\[|\]\]>', '', link)
-            
+
             pub = pub_match.group(1).strip() if pub_match else ""
-            
+
             if title:
                 items.append({
                     "source": source_name,
@@ -62,10 +118,16 @@ def parse_feed_manual(url: str, source_name: str) -> list:
                     "url": link,
                     "published": pub,
                 })
-        
+
         return items
+    except requests.exceptions.Timeout:
+        print(f"  {source_name}: request timed out")
+        return []
+    except requests.exceptions.ConnectionError:
+        print(f"  {source_name}: connection error")
+        return []
     except Exception as e:
-        print(f"  ⚠ {source_name} failed: {e}")
+        print(f"  {source_name} failed: {e}")
         return []
 
 
@@ -81,10 +143,14 @@ def dedup_title(title: str) -> bool:
 def scan_news() -> list:
     """Fetch headlines from all RSS feeds."""
     all_articles = []
-    
-    for name, url in RSS_FEEDS.items():
+    feeds = WORKING_FEEDS
+
+    for name, url in feeds.items():
         print(f"  Fetching {name}...")
-        articles = parse_feed_manual(url, name)
+        if HAS_FEEDPARSER:
+            articles = parse_feed_feedparser(url, name)
+        else:
+            articles = parse_feed_manual(url, name)
         for a in articles:
             if not dedup_title(a["title"]):
                 all_articles.append(a)
@@ -92,7 +158,7 @@ def scan_news() -> list:
                     "timestamp": now_iso(),
                     **a,
                 })
-    
+
     return all_articles
 
 

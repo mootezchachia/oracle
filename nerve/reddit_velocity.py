@@ -31,7 +31,7 @@ def fetch_subreddit(sub: str, sort="hot", limit=10) -> list:
             "age_hours": (time.time() - p["data"]["created_utc"]) / 3600,
         } for p in posts if p["kind"] == "t3"]
     except Exception as e:
-        print(f"  ⚠ r/{sub} failed: {e}")
+        print(f"  r/{sub} failed: {e}")
         return []
 
 
@@ -47,16 +47,37 @@ def fetch_top_comments(permalink: str, limit=5) -> list:
             "body": c["data"].get("body", "")[:400],
             "score": c["data"].get("score", 0),
         } for c in comments if c["kind"] == "t1"][:limit]
-    except:
+    except Exception:
         return []
 
 
 def calculate_velocity(post: dict) -> float:
-    """Calculate post velocity: score per hour, weighted by comment engagement."""
+    """Calculate post velocity: score per hour, with comments weighted 2x.
+    Also applies an acceleration bonus for very young, high-engagement posts."""
     age = max(post["age_hours"], 0.1)
     score_velocity = post["score"] / age
-    comment_velocity = post["num_comments"] / age
-    return round(score_velocity + (comment_velocity * 2), 2)
+    # Comments weighted 2x as they indicate deeper engagement
+    comment_velocity = (post["num_comments"] * 2) / age
+
+    base_velocity = score_velocity + comment_velocity
+
+    # Acceleration bonus: posts under 2 hours old with high engagement
+    # are likely breaking events and get an extra boost
+    acceleration = 1.0
+    if age < 2.0 and post["score"] > 50:
+        acceleration = 1.5
+    elif age < 1.0 and post["score"] > 20:
+        acceleration = 2.0
+
+    # Upvote ratio bonus: controversial posts (ratio near 0.5) or
+    # strongly upvoted posts (ratio > 0.95) get a boost
+    ratio = post.get("upvote_ratio", 0.5)
+    if ratio > 0.95:
+        acceleration *= 1.2  # highly agreed upon = strong signal
+    elif ratio < 0.55 and ratio > 0:
+        acceleration *= 1.3  # controversial = ambiguous narrative
+
+    return round(base_velocity * acceleration, 2)
 
 
 def scan_reddit(subs: list = None, limit_per_sub: int = 10) -> list:
@@ -92,7 +113,7 @@ def print_top_posts(posts: list, limit=15):
     top = posts[:limit]
     print(f"\n  TOP {limit} ACCELERATING POSTS:\n")
     print(f"  {'#':<4} {'Vel':>8} {'Score':>7} {'Comments':>9} {'Age':>6}  {'Sub':<20} Title")
-    print(f"  {'─'*100}")
+    print(f"  {'---'*34}")
     for i, p in enumerate(top, 1):
         title = p["title"][:45] + ("..." if len(p["title"]) > 45 else "")
         print(f"  {i:<4} {p['velocity']:>8.1f} {p['score']:>7} {p['num_comments']:>9} "

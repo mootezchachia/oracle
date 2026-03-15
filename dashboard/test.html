@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html><head><title>TEST</title></head>
+<body style="background:#000;color:#fff;font-family:monospace;padding:40px">
+<h1 id="title">Loading...</h1>
+<pre id="output"></pre>
+<script>
+document.getElementById('title').textContent = 'ORACLE TEST PAGE';
+var out = document.getElementById('output');
+function log(msg) { out.textContent += msg + '\n'; }
+
+log('1. JS works');
+
+fetch('/api/status')
+  .then(function(r) { return r.json(); })
+  .then(function(s) {
+    log('2. API works: ' + s.status);
+    log('   Markets: ' + s.counts.markets);
+    log('   Predictions: ' + s.counts.predictions);
+    return fetch('/api/predictions');
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(preds) {
+    log('3. Predictions loaded: ' + preds.length);
+    for (var i = 0; i < preds.length; i++) {
+      var p = preds[i];
+      log('   #' + p.number + ': ' + (p.market || 'no market'));
+    }
+    return fetch('/api/price-history');
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(ph) {
+    log('4. Price history loaded');
+    var keys = Object.keys(ph);
+    for (var i = 0; i < keys.length; i++) {
+      var info = ph[keys[i]];
+      log('   ' + info.label + ': ' + info.history.length + ' pts');
+    }
+    log('');
+    log('ALL OK - Dashboard should work');
+  })
+  .catch(function(e) {
+    log('ERROR: ' + e.message);
+  });
+</script>
+</body></html>

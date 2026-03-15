@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORACLE — Narrative Arbitrage Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   ORACLE DASHBOARD — Dark Theme, Data-Dense, World-Monitor Inspired
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg-0: #030506;
+  --bg-1: #0a0e13;
+  --bg-2: #111820;
+  --bg-3: #1a2332;
+  --border: #1e2a3a;
+  --border-bright: #2d4156;
+  --text-0: #e8edf4;
+  --text-1: #a0aec0;
+  --text-2: #5a6a7e;
+  --gold: #f0b429;
+  --gold-dim: #b8860b;
+  --green: #3fb950;
+  --green-dim: #1a4d2e;
+  --red: #f85149;
+  --red-dim: #5c1d1a;
+  --blue: #58a6ff;
+  --cyan: #39d353;
+  --purple: #bc8cff;
+  --orange: #f0883e;
+  --font: 'JetBrains Mono', 'Fira Code', 'Cascadia Mono', monospace;
+}
+
+html { font-size: 13px; }
+
+body {
+  background: var(--bg-0);
+  color: var(--text-0);
+  font-family: var(--font);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanline overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    transparent 0px, transparent 2px,
+    rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ─── Header ────────────────────────────────────────────────────────────── */
+
+.header {
+  background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg-1) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  background: conic-gradient(from 0deg, var(--gold), var(--orange), var(--gold));
+  border-radius: 50%;
+  animation: logo-spin 8s linear infinite;
+  box-shadow: 0 0 20px rgba(240,180,41,0.3);
+}
+
+@keyframes logo-spin {
+  to { background: conic-gradient(from 360deg, var(--gold), var(--orange), var(--gold)); }
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-shadow: 0 0 30px rgba(240,180,41,0.2);
+}
+
+.logo-sub {
+  font-size: 9px;
+  color: var(--text-2);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.nav-tab {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-2);
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.nav-tab:hover, .nav-tab.active {
+  color: var(--text-0);
+  background: var(--bg-3);
+}
+
+.nav-tab.active {
+  color: var(--gold);
+  border-bottom: 2px solid var(--gold);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--green);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 8px var(--green);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.clock {
+  font-size: 12px;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.scan-btn {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  font-family: var(--font);
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.scan-btn:hover {
+  background: var(--border);
+  color: var(--gold);
+  border-color: var(--gold-dim);
+}
+
+/* ─── Signal Ticker ──────────────────────────────────────────────────────── */
+
+.ticker-bar {
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  height: 32px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.ticker-label {
+  background: var(--red);
+  color: #000;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  white-space: nowrap;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.ticker-track {
+  display: flex;
+  animation: ticker-scroll 60s linear infinite;
+  gap: 40px;
+  padding-left: 20px;
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticker-item .tag {
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.tag-hot { background: var(--red-dim); color: var(--red); }
+.tag-market { background: rgba(88,166,255,0.15); color: var(--blue); }
+.tag-econ { background: rgba(240,136,62,0.15); color: var(--orange); }
+.tag-news { background: rgba(188,140,255,0.15); color: var(--purple); }
+
+/* ─── Main Grid ──────────────────────────────────────────────────────────── */
+
+.main {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 12px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+/* ─── Cards ──────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+
+.card:hover {
+  border-color: var(--border-bright);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-2);
+}
+
+.card-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title .count {
+  background: var(--bg-3);
+  color: var(--text-1);
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 400;
+}
+
+.card-body {
+  padding: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.card-body::-webkit-scrollbar { width: 4px; }
+.card-body::-webkit-scrollbar-track { background: transparent; }
+.card-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ─── Prediction Card (Hero) ────────────────────────────────────────────── */
+
+.prediction-card {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, var(--bg-1) 0%, rgba(240,180,41,0.03) 100%);
+  border-color: var(--gold-dim);
+}
+
+.prediction-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 30px rgba(240,180,41,0.05);
+}
+
+.pred-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr 1fr 200px;
+  gap: 1px;
+  background: var(--border);
+}
+
+.pred-section {
+  background: var(--bg-1);
+  padding: 16px;
+}
+
+.pred-label {
+  font-size: 9px;
+  color: var(--text-2);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.pred-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pred-value.green { color: var(--green); }
+.pred-value.red { color: var(--red); }
+.pred-value.gold { color: var(--gold); }
+
+.pred-sub {
+  font-size: 11px;
+  color: var(--text-2);
+  margin-top: 6px;
+}
+
+.pred-market-name {
+  font-size: 13px;
+  color: var(--text-0);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.pred-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.pred-tag.buy { background: var(--green-dim); color: var(--green); }
+.pred-tag.sell { background: var(--red-dim); color: var(--red); }
+
+.price-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 10px;
+  background: var(--bg-3);
+}
+
+.price-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+
+.price-bar-fill.yes { background: var(--green); }
+.price-bar-fill.no { background: var(--red); }
+
+.pred-prices {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-2);
+}
+
+/* ─── Markets Card ───────────────────────────────────────────────────────── */
+
+.markets-card {
+  grid-column: 1 / 3;
+  grid-row: 2;
+}
+
+.market-row {
+  display: grid;
+  grid-template-columns: 1fr 160px 100px;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(30,42,58,0.5);
+  align-items: center;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.market-row:hover {
+  background: var(--bg-2);
+}
+
+.market-question {
+  font-size: 12px;
+  color: var(--text-0);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.market-prices {
+  display: flex;
+  gap: 4px;
+}
+
+.market-price {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.market-price.yes {
+  background: var(--green-dim);
+  color: var(--green);
+}
+
+.market-price.no {
+  background: var(--red-dim);
+  color: var(--red);
+}
+
+.market-vol {
+  font-size: 11px;
+  color: var(--text-2);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Economic Card ──────────────────────────────────────────────────────── */
+
+.econ-card {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.econ-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(30,42,58,0.5);
+}
+
+.econ-name {
+  font-size: 10px;
+  color: var(--text-2);
+  letter-spacing: 0.5px;
+}
+
+.econ-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.econ-num {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.econ-arrow {
+  font-size: 12px;
+}
+
+.econ-arrow.up { color: var(--green); }
+.econ-arrow.down { color: var(--red); }
+.econ-arrow.flat { color: var(--text-2); }
+
+.econ-change {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.econ-date {
+  font-size: 9px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+/* ─── Reddit Card ────────────────────────────────────────────────────────── */
+
+.reddit-card {
+  grid-column: 1 / 3;
+  grid-row: 3;
+}
+
+.reddit-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 80px 60px;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(30,42,58,0.5);
+  align-items: center;
+  transition: background 0.15s;
+}
+
+.reddit-row:hover { background: var(--bg-2); }
+
+.velocity-bar-wrap {
+  position: relative;
+  height: 20px;
+}
+
+.velocity-bar {
+  height: 100%;
+  border-radius: 3px;
+  min-width: 4px;
+  transition: width 0.8s ease;
+}
+
+.velocity-num {
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-0);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.reddit-title {
+  font-size: 11px;
+  color: var(--text-0);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reddit-sub {
+  font-size: 10px;
+  color: var(--text-2);
+}
+
+.reddit-score {
+  font-size: 11px;
+  color: var(--text-1);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── News Card ──────────────────────────────────────────────────────────── */
+
+.news-card {
+  grid-column: 3;
+  grid-row: 3;
+}
+
+.news-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(30,42,58,0.5);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.news-item:hover { background: var(--bg-2); }
+
+.news-source {
+  font-size: 9px;
+  color: var(--text-2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.news-title {
+  font-size: 11px;
+  color: var(--text-0);
+  line-height: 1.4;
+}
+
+/* ─── Status Bar ─────────────────────────────────────────────────────────── */
+
+.status-bar {
+  background: var(--bg-2);
+  border-top: 1px solid var(--border);
+  padding: 6px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-2);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+.status-left, .status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-dot.ok { background: var(--green); box-shadow: 0 0 4px var(--green); }
+.status-dot.warn { background: var(--orange); }
+.status-dot.err { background: var(--red); }
+
+/* ─── Loading State ──────────────────────────────────────────────────────── */
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--text-2);
+  gap: 12px;
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ─── Empty State ────────────────────────────────────────────────────────── */
+
+.empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-2);
+  font-size: 11px;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+  .main {
+    grid-template-columns: 1fr 1fr;
+  }
+  .prediction-card { grid-column: 1 / -1; }
+  .pred-grid { grid-template-columns: 1fr 1fr; }
+  .markets-card { grid-column: 1 / -1; }
+  .reddit-card { grid-column: 1 / -1; }
+  .econ-card { grid-column: 1; grid-row: auto; }
+  .news-card { grid-column: 2; grid-row: auto; }
+}
+
+@media (max-width: 768px) {
+  .main { grid-template-columns: 1fr; }
+  .pred-grid { grid-template-columns: 1fr; }
+  .header { padding: 0 12px; }
+  .header-center { display: none; }
+  html { font-size: 12px; }
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px rgba(240,180,41,0.1); }
+  50% { box-shadow: 0 0 20px rgba(240,180,41,0.15); }
+}
+
+.card-glow {
+  animation: glow 4s ease-in-out infinite;
+}
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-left">
+    <div class="logo">
+      <div class="logo-icon"></div>
+      <div>
+        <div class="logo-text">ORACLE</div>
+        <div class="logo-sub">NARRATIVE ARBITRAGE ENGINE</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="header-center">
+    <div class="nav-tab active">DASHBOARD</div>
+    <div class="nav-tab">MARKETS</div>
+    <div class="nav-tab">SIGNALS</div>
+    <div class="nav-tab">PREDICTIONS</div>
+  </div>
+
+  <div class="header-right">
+    <div class="live-badge">
+      <div class="live-dot"></div>
+      <span id="liveStatus">CONNECTING</span>
+    </div>
+    <div class="clock" id="clock">--:--:-- UTC</div>
+    <button class="scan-btn" onclick="triggerScan()">SCAN NOW</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     SIGNAL TICKER
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<div class="ticker-bar">
+  <div class="ticker-label">SIGNALS</div>
+  <div class="ticker-track" id="tickerTrack">
+    <span class="ticker-item"><span class="tag tag-hot">LOADING</span> Connecting to data feeds...</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     MAIN GRID
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- Prediction Hero Card -->
+  <div class="card prediction-card card-glow" id="predictionCard">
+    <div class="card-header">
+      <div class="card-title">
+        <span style="color:var(--gold)">◆</span> ACTIVE PREDICTION
+        <span class="count" id="predCount">0</span>
+      </div>
+      <div style="font-size:10px;color:var(--text-2)" id="predDate">—</div>
+    </div>
+    <div id="predictionBody">
+      <div class="loading"><div class="loading-spinner"></div><div class="loading-text">Loading predictions</div></div>
+    </div>
+  </div>
+
+  <!-- Markets Card -->
+  <div class="card markets-card">
+    <div class="card-header">
+      <div class="card-title">
+        <span style="color:var(--blue)">◆</span> POLYMARKET — SENTIMENT MARKETS
+        <span class="count" id="marketCount">0</span>
+      </div>
+    </div>
+    <div class="card-body" id="marketsBody">
+      <div class="loading"><div class="loading-spinner"></div><div class="loading-text">Loading markets</div></div>
+    </div>
+  </div>
+
+  <!-- Economic Card -->
+  <div class="card econ-card">
+    <div class="card-header">
+      <div class="card-title">
+        <span style="color:var(--orange)">◆</span> ECONOMIC DATA
+        <span class="count" id="econCount">0</span>
+      </div>
+    </div>
+    <div class="card-body" id="econBody">
+      <div class="loading"><div class="loading-spinner"></div><div class="loading-text">Loading FRED</div></div>
+    </div>
+  </div>
+
+  <!-- Reddit Velocity Card -->
+  <div class="card reddit-card">
+    <div class="card-header">
+      <div class="card-title">
+        <span style="color:var(--red)">◆</span> REDDIT — VELOCITY TRACKER
+        <span class="count" id="redditCount">0</span>
+      </div>
+    </div>
+    <div class="card-body" id="redditBody">
+      <div class="loading"><div class="loading-spinner"></div><div class="loading-text">Loading Reddit</div></div>
+    </div>
+  </div>
+
+  <!-- News Card -->
+  <div class="card news-card">
+    <div class="card-header">
+      <div class="card-title">
+        <span style="color:var(--purple)">◆</span> NEWS FEED
+        <span class="count" id="newsCount">0</span>
+      </div>
+    </div>
+    <div class="card-body" id="newsBody">
+      <div class="loading"><div class="loading-spinner"></div><div class="loading-text">Loading headlines</div></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     STATUS BAR
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<footer class="status-bar">
+  <div class="status-left">
+    <div class="status-item">
+      <div class="status-dot" id="statusDotMarkets"></div>
+      <span>MARKETS</span>
+    </div>
+    <div class="status-item">
+      <div class="status-dot" id="statusDotReddit"></div>
+      <span>REDDIT</span>
+    </div>
+    <div class="status-item">
+      <div class="status-dot" id="statusDotNews"></div>
+      <span>NEWS</span>
+    </div>
+    <div class="status-item">
+      <div class="status-dot" id="statusDotFred"></div>
+      <span>FRED</span>
+    </div>
+  </div>
+  <div class="status-right">
+    <span id="scanCount">SCANS: 0</span>
+    <span id="lastScan">LAST SCAN: —</span>
+    <span id="errorCount" style="color:var(--text-2)">ERRORS: 0</span>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════════════════ -->
+<script>
+
+// ─── State ──────────────────────────────────────────────────────────────────
+let state = { markets: [], reddit: [], news: [], fred: [], predictions: [], events: [] };
+
+// ─── Clock ──────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toUTCString().split(' ').slice(4).join(' ').replace(' GMT', ' UTC');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── API Fetching ───────────────────────────────────────────────────────────
+async function fetchJSON(endpoint) {
+  try {
+    const r = await fetch('/api/' + endpoint);
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch (e) {
+    console.error(`Failed to fetch ${endpoint}:`, e);
+    return null;
+  }
+}
+
+async function refreshAll() {
+  const [markets, reddit, news, fred, predictions, events, status] = await Promise.all([
+    fetchJSON('markets'),
+    fetchJSON('reddit'),
+    fetchJSON('news'),
+    fetchJSON('fred'),
+    fetchJSON('predictions'),
+    fetchJSON('events'),
+    fetchJSON('status'),
+  ]);
+
+  try {
+    if (markets) { state.markets = markets; renderMarkets(); }
+    if (reddit) { state.reddit = reddit; renderReddit(); }
+    if (news) { state.news = news; renderNews(); }
+    if (fred) { state.fred = fred; renderEcon(); }
+    if (predictions) { state.predictions = predictions; renderPrediction(); }
+    if (events) { state.events = events; }
+    if (status) { renderStatus(status); }
+    renderTicker();
+    document.getElementById('liveStatus').textContent = 'LIVE';
+  } catch(e) {
+    console.error('Render error:', e);
+    document.getElementById('liveStatus').textContent = 'ERROR';
+  }
+}
+
+// ─── Render: Prediction Card ────────────────────────────────────────────────
+function renderPrediction() {
+  var el = document.getElementById('predictionBody');
+  var countEl = document.getElementById('predCount');
+  var dateEl = document.getElementById('predDate');
+
+  try {
+  var preds = state.predictions.filter(function(p) { return p.market; });
+
+  if (!preds.length) {
+    countEl.textContent = '0';
+    el.innerHTML = '<div class="empty">No active predictions yet.</div>';
+    return;
+  }
+
+  countEl.textContent = preds.length;
+  dateEl.textContent = (preds[preds.length - 1] && preds[preds.length - 1].date) || '';
+
+  var html = '';
+  for (var i = 0; i < preds.length; i++) {
+    var pred = preds[i];
+    var ourYes = '?';
+    if (pred.our_odds && pred.our_odds.length >= 1) {
+      var om = pred.our_odds[0].match(/(\d+)%/);
+      if (om) ourYes = om[1];
+    }
+
+    var yesPrice = 50;
+    var cp = pred.current_price || '';
+    var cpm = cp.match(/(\d+)/);
+    if (cpm) yesPrice = parseInt(cpm[1]);
+    var noPrice = 100 - yesPrice;
+
+    var call = pred.primary_call || pred.call || '';
+    var isBuyYes = /buy yes/i.test(call);
+    var isBuyNo = /buy no/i.test(call) || /no ceasefire/i.test(call);
+    var action = isBuyYes ? 'BUY YES' : isBuyNo ? 'BUY NO' : 'HOLD';
+    var actionColor = isBuyYes ? '#3fb950' : '#f85149';
+    var actionBg = isBuyYes ? 'rgba(63,185,80,0.15)' : 'rgba(248,81,73,0.15)';
+
+    var cm = call.match(/(\d+)\/100/);
+    var confidence = cm ? cm[1] : '?';
+    var edge = ourYes !== '?' ? Math.abs(parseInt(ourYes) - yesPrice) : 0;
+
+    var num = pred.number || '?';
+    var predUrl = pred.url || '#';
+    var canvasId = 'predchart' + num;
+
+    html += '<div style="border-bottom:1px solid var(--border);padding:20px">'
+      // Row 1: Big action call + market name
+      + '<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px">'
+      + '  <div style="background:' + actionBg + ';border:2px solid ' + actionColor + ';border-radius:8px;padding:10px 20px;text-align:center;min-width:120px">'
+      + '    <div style="font-size:20px;font-weight:700;color:' + actionColor + ';letter-spacing:2px">' + action + '</div>'
+      + '    <div style="font-size:10px;color:var(--text-2);margin-top:2px">Confidence ' + confidence + '%</div>'
+      + '  </div>'
+      + '  <div style="flex:1">'
+      + '    <div style="font-size:9px;color:var(--gold);letter-spacing:1.5px;margin-bottom:4px">PREDICTION #' + num + '</div>'
+      + '    <a href="' + predUrl + '" target="_blank" style="font-size:14px;color:var(--text-0);text-decoration:none;font-weight:500">' + esc(pred.market) + ' ↗</a>'
+      + '  </div>'
+      + '  <div style="text-align:right">'
+      + '    <div style="font-size:9px;color:var(--text-2);letter-spacing:1px">EDGE</div>'
+      + '    <div style="font-size:24px;font-weight:700;color:' + (edge >= 5 ? 'var(--gold)' : 'var(--text-2)') + '">' + edge + '%</div>'
+      + '  </div>'
+      + '</div>'
+
+      // Row 2: Three columns — Market / Oracle / Trade
+      + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px">'
+      // Column 1: Market price
+      + '  <div>'
+      + '    <div style="font-size:9px;color:var(--text-2);letter-spacing:1px;margin-bottom:6px">POLYMARKET NOW</div>'
+      + '    <div style="display:flex;gap:12px;align-items:baseline">'
+      + '      <span style="font-size:22px;font-weight:700;color:var(--green)">' + yesPrice + '¢ <span style="font-size:11px;font-weight:400">YES</span></span>'
+      + '      <span style="font-size:16px;color:var(--red)">' + noPrice + '¢ <span style="font-size:11px">NO</span></span>'
+      + '    </div>'
+      + '    <div style="display:flex;height:6px;border-radius:3px;overflow:hidden;margin-top:8px;background:var(--bg-3)">'
+      + '      <div style="width:' + yesPrice + '%;background:var(--green);border-radius:3px"></div>'
+      + '      <div style="width:' + noPrice + '%;background:var(--red);border-radius:3px"></div>'
+      + '    </div>'
+      + '  </div>'
+      // Column 2: Oracle estimate
+      + '  <div>'
+      + '    <div style="font-size:9px;color:var(--text-2);letter-spacing:1px;margin-bottom:6px">ORACLE SAYS</div>'
+      + '    <div style="font-size:22px;font-weight:700;color:var(--gold)">' + ourYes + '% <span style="font-size:11px;font-weight:400;color:var(--text-2)">fair value YES</span></div>'
+      + '    <div style="font-size:11px;color:var(--text-1);margin-top:6px">' + esc(pred.narrative || '') + '</div>'
+      + '  </div>'
+      // Column 3: Trade details
+      + '  <div>'
+      + '    <div style="font-size:9px;color:var(--text-2);letter-spacing:1px;margin-bottom:6px">TRADE DETAILS</div>'
+      + '    <div style="font-size:12px;color:var(--text-0);line-height:1.8">'
+      + '      Entry: <span style="color:var(--green);font-weight:600">' + esc(cp || '—') + '</span><br>'
+      + '      Target: <span style="color:var(--gold);font-weight:600">' + esc(pred.target_price || '—') + '</span>'
+      + '    </div>'
+      + '    <a href="' + predUrl + '" target="_blank" style="display:inline-block;margin-top:8px;font-size:10px;letter-spacing:1px;color:#000;background:var(--gold);text-decoration:none;padding:6px 14px;border-radius:4px;font-weight:600">TRADE ON POLYMARKET ↗</a>'
+      + '  </div>'
+      + '</div>'
+
+      // Row 3: Chart
+      + '<div style="background:var(--bg-0);border:1px solid var(--border);border-radius:6px;padding:12px">'
+      + '  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
+      + '    <div style="font-size:9px;color:var(--text-2);letter-spacing:1.5px">LIVE PRICE vs ORACLE ESTIMATE</div>'
+      + '    <div style="display:flex;gap:16px;font-size:9px">'
+      + '      <span><span style="display:inline-block;width:12px;height:2px;background:var(--green);vertical-align:middle;margin-right:4px"></span>LIVE</span>'
+      + '      <span><span style="display:inline-block;width:12px;height:2px;background:var(--gold);vertical-align:middle;margin-right:4px;border-top:1px dashed var(--gold)"></span>ORACLE</span>'
+      + '    </div>'
+      + '  </div>'
+      + '  <canvas id="' + canvasId + '" width="800" height="160" style="width:100%;height:160px"></canvas>'
+      + '</div>'
+
+      + '</div>';
+  }
+
+  el.innerHTML = html;
+
+  // Draw charts after DOM update
+  setTimeout(function() { fetchAndRenderCharts(); }, 50);
+
+  } catch(e) {
+    console.error('Prediction render error:', e);
+    el.innerHTML = '<div class="empty">Render error: ' + e.message + '</div>';
+  }
+}
+
+// ─── Render: Markets ────────────────────────────────────────────────────────
+function renderMarkets() {
+  const el = document.getElementById('marketsBody');
+  const count = document.getElementById('marketCount');
+  count.textContent = state.markets.length;
+
+  if (!state.markets.length) {
+    el.innerHTML = '<div class="empty">No sentiment-driven markets found.</div>';
+    return;
+  }
+
+  el.innerHTML = state.markets.map(m => {
+    const yes = m.outcomes?.find(o => o.name?.toLowerCase() === 'yes');
+    const no = m.outcomes?.find(o => o.name?.toLowerCase() === 'no');
+    const yesP = yes?.price ?? m.outcomes?.[0]?.price ?? '—';
+    const noP = no?.price ?? m.outcomes?.[1]?.price ?? '—';
+
+    return `
+      <div class="market-row fade-in" onclick="window.open('${m.url}','_blank')">
+        <div class="market-question" title="${esc(m.question)}">${esc(m.question)} <span style="color:var(--text-2);font-size:9px">↗</span></div>
+        <div class="market-prices">
+          <span class="market-price yes">${yesP}%</span>
+          <span class="market-price no">${noP}%</span>
+        </div>
+        <div class="market-vol">${m.volume_fmt}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Render: Economic Data ──────────────────────────────────────────────────
+function renderEcon() {
+  const el = document.getElementById('econBody');
+  const count = document.getElementById('econCount');
+  count.textContent = state.fred.length;
+
+  if (!state.fred.length) {
+    el.innerHTML = '<div class="empty">FRED data unavailable.<br><span style="font-size:9px;color:var(--text-2)">Set FRED_API_KEY for live data</span></div>';
+    return;
+  }
+
+  el.innerHTML = state.fred.map(f => {
+    const arrow = f.direction === 'up' ? '▲' : f.direction === 'down' ? '▼' : '●';
+    const cls = f.direction === 'up' ? 'up' : f.direction === 'down' ? 'down' : 'flat';
+    const val = typeof f.value === 'number' ?
+      (f.value > 100 ? f.value.toFixed(1) : f.value.toFixed(2)) : f.value;
+    const chg = f.change > 0 ? `+${f.change.toFixed(2)}` : f.change?.toFixed(2) || '';
+
+    return `
+      <div class="econ-row fade-in">
+        <div>
+          <div class="econ-name">${esc(f.name)}</div>
+          <div class="econ-date">${f.date}${f.cached ? ' (cached)' : ''}</div>
+        </div>
+        <div class="econ-val">
+          <span class="econ-num">${val}</span>
+          <span class="econ-arrow ${cls}">${arrow}</span>
+          <span class="econ-change ${cls}">${chg}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Render: Reddit ─────────────────────────────────────────────────────────
+function renderReddit() {
+  const el = document.getElementById('redditBody');
+  const count = document.getElementById('redditCount');
+  count.textContent = state.reddit.length;
+
+  if (!state.reddit.length) {
+    el.innerHTML = '<div class="empty">No Reddit data available.</div>';
+    return;
+  }
+
+  const maxV = Math.max(...state.reddit.map(r => r.velocity), 1);
+
+  el.innerHTML = state.reddit.map(r => {
+    const pct = Math.min((r.velocity / maxV) * 100, 100);
+    const color = pct > 70 ? 'var(--red)' : pct > 40 ? 'var(--orange)' : 'var(--blue)';
+
+    return `
+      <div class="reddit-row fade-in">
+        <div class="velocity-bar-wrap">
+          <div class="velocity-bar" style="width:${pct}%;background:${color}"></div>
+          <span class="velocity-num">${fmt(r.velocity)}</span>
+        </div>
+        <div class="reddit-title" title="${esc(r.title)}">${esc(r.title)}</div>
+        <div class="reddit-sub">r/${r.subreddit}</div>
+        <div class="reddit-score">${fmt(r.score)} ▲</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── Render: News ───────────────────────────────────────────────────────────
+function renderNews() {
+  const el = document.getElementById('newsBody');
+  const count = document.getElementById('newsCount');
+  count.textContent = state.news.length;
+
+  if (!state.news.length) {
+    el.innerHTML = '<div class="empty">No headlines available.</div>';
+    return;
+  }
+
+  el.innerHTML = state.news.map(n => `
+    <div class="news-item fade-in" onclick="window.open('${n.url}','_blank')">
+      <div class="news-source">${esc(n.source)}</div>
+      <div class="news-title">${esc(n.title)}</div>
+    </div>
+  `).join('');
+}
+
+// ─── Render: Ticker ─────────────────────────────────────────────────────────
+function renderTicker() {
+  const el = document.getElementById('tickerTrack');
+  const items = [];
+
+  // Top Reddit by velocity
+  state.reddit.slice(0, 5).forEach(r => {
+    items.push(`<span class="ticker-item"><span class="tag tag-hot">▲${fmt(r.velocity)}/hr</span> ${esc(r.title.slice(0, 80))}</span>`);
+  });
+
+  // Top market movers
+  state.markets.slice(0, 3).forEach(m => {
+    const p = m.outcomes?.[0]?.price ?? '?';
+    items.push(`<span class="ticker-item"><span class="tag tag-market">${p}%</span> ${esc(m.question?.slice(0, 70))}</span>`);
+  });
+
+  // Top news
+  state.news.slice(0, 3).forEach(n => {
+    items.push(`<span class="ticker-item"><span class="tag tag-news">${esc(n.source)}</span> ${esc(n.title.slice(0, 70))}</span>`);
+  });
+
+  // Duplicate for seamless loop
+  const content = items.join('') + items.join('');
+  el.innerHTML = content;
+}
+
+// ─── Render: Status Bar ─────────────────────────────────────────────────────
+function renderStatus(s) {
+  const setDot = (id, hasData) => {
+    const dot = document.getElementById(id);
+    if (dot) {
+      dot.className = 'status-dot ' + (hasData ? 'ok' : 'warn');
+    }
+  };
+
+  setDot('statusDotMarkets', s.counts?.markets > 0);
+  setDot('statusDotReddit', s.counts?.reddit > 0);
+  setDot('statusDotNews', s.counts?.news > 0);
+  setDot('statusDotFred', s.counts?.fred > 0);
+
+  document.getElementById('scanCount').textContent = `SCANS: ${s.scans || 0}`;
+  document.getElementById('lastScan').textContent = `LAST: ${s.last_scan ? new Date(s.last_scan).toLocaleTimeString() : '—'}`;
+  document.getElementById('errorCount').textContent = `ERRORS: ${s.errors?.length || 0}`;
+  if (s.errors?.length > 0) {
+    document.getElementById('errorCount').style.color = 'var(--orange)';
+  }
+}
+
+// ─── Utils ──────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function fmt(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return Math.round(n).toString();
+}
+
+function triggerScan() {
+  fetch('/api/scan', { method: 'POST' });
+  document.querySelector('.scan-btn').textContent = 'SCANNING...';
+  setTimeout(() => {
+    document.querySelector('.scan-btn').textContent = 'SCAN NOW';
+    refreshAll();
+  }, 15000);
+}
+
+// ─── SSE Live Updates ───────────────────────────────────────────────────────
+function connectSSE() {
+  const es = new EventSource('/api/stream');
+  es.onmessage = (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.type === 'update') {
+        refreshAll();
+      }
+    } catch {}
+  };
+  es.onerror = () => {
+    document.getElementById('liveStatus').textContent = 'RECONNECTING';
+    setTimeout(connectSSE, 5000);
+  };
+}
+
+// ─── Charts: ORACLE vs Live ─────────────────────────────────────────────────
+
+async function fetchAndRenderCharts() {
+  var data = await fetchJSON('price-history');
+  if (!data) return;
+
+  // Map slug → prediction number for canvas lookup
+  var slugToNum = {
+    'us-x-iran-ceasefire-by-march-31': '1',
+    'will-crude-oil-cl-hit-high-120-by-end-of-march-766-813-597': '2'
+  };
+
+  var slugs = Object.keys(data);
+  for (var i = 0; i < slugs.length; i++) {
+    var slug = slugs[i];
+    var info = data[slug];
+    if (!info.history || info.history.length < 1) continue;
+    var num = slugToNum[slug] || slug.replace(/[^a-z0-9]/g, '');
+    var canvas = document.getElementById('predchart' + num);
+    if (!canvas) continue;
+    drawChart(canvas, info.history, info.oracle, info.label);
+  }
+}
+
+function drawChart(canvas, history, oracleVal, label) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+  const W = rect.width;
+  const H = rect.height;
+
+  const pad = {top: 10, right: 50, bottom: 25, left: 5};
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+
+  // Data
+  const prices = history.map(h => h.price);
+  const times = history.map(h => h.ts);
+
+  // Scale — always show 0-100 range but zoom into relevant area
+  const allVals = [...prices, oracleVal];
+  let minV = Math.max(0, Math.min(...allVals) - 10);
+  let maxV = Math.min(100, Math.max(...allVals) + 10);
+  if (maxV - minV < 20) { minV = Math.max(0, minV - 5); maxV = Math.min(100, maxV + 5); }
+  const minT = times[0];
+  const maxT = times[times.length - 1];
+  const rangeT = Math.max(maxT - minT, 60);
+
+  function x(t) { return pad.left + ((t - minT) / rangeT) * cW; }
+  function y(v) { return pad.top + cH - ((v - minV) / (maxV - minV)) * cH; }
+
+  // Background
+  ctx.fillStyle = '#0a0e13';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(30,42,58,0.5)';
+  ctx.lineWidth = 0.5;
+  const steps = 5;
+  for (let i = 0; i <= steps; i++) {
+    const val = minV + (maxV - minV) * (i / steps);
+    const yy = y(val);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, yy);
+    ctx.lineTo(W - pad.right, yy);
+    ctx.stroke();
+    // Label
+    ctx.fillStyle = '#5a6a7e';
+    ctx.font = '9px JetBrains Mono';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(val) + '%', W - pad.right + 30, yy + 3);
+  }
+
+  // Time labels
+  ctx.fillStyle = '#5a6a7e';
+  ctx.font = '9px JetBrains Mono';
+  ctx.textAlign = 'center';
+  if (history.length > 1) {
+    const firstDate = new Date(times[0] * 1000);
+    const lastDate = new Date(times[times.length-1] * 1000);
+    ctx.fillText(firstDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), pad.left + 20, H - 5);
+    ctx.fillText(lastDate.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), W - pad.right - 20, H - 5);
+  }
+
+  // ORACLE estimate line (horizontal dashed)
+  ctx.strokeStyle = '#f0b429';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([6, 4]);
+  const oracleY = y(oracleVal);
+  ctx.beginPath();
+  ctx.moveTo(pad.left, oracleY);
+  ctx.lineTo(W - pad.right, oracleY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ORACLE label
+  ctx.fillStyle = '#f0b429';
+  ctx.font = 'bold 9px JetBrains Mono';
+  ctx.textAlign = 'right';
+  ctx.fillText('ORACLE ' + oracleVal + '%', W - pad.right + 45, oracleY - 6);
+
+  // Price line
+  if (prices.length >= 2) {
+    // Glow effect
+    ctx.strokeStyle = 'rgba(57,211,83,0.2)';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    prices.forEach((p, i) => {
+      const px = x(times[i]), py = y(p);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+
+    // Main line
+    ctx.strokeStyle = '#3fb950';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    prices.forEach((p, i) => {
+      const px = x(times[i]), py = y(p);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+  }
+
+  // Data points
+  prices.forEach((p, i) => {
+    const px = x(times[i]), py = y(p);
+    ctx.fillStyle = '#3fb950';
+    ctx.beginPath();
+    ctx.arc(px, py, i === prices.length - 1 ? 4 : 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Latest price label
+  if (prices.length > 0) {
+    const lastP = prices[prices.length - 1];
+    const lastX = x(times[times.length - 1]);
+    const lastY = y(lastP);
+    ctx.fillStyle = '#111';
+    ctx.fillRect(lastX + 6, lastY - 9, 36, 16);
+    ctx.strokeStyle = '#3fb950';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(lastX + 6, lastY - 9, 36, 16);
+    ctx.fillStyle = '#3fb950';
+    ctx.font = 'bold 10px JetBrains Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText(lastP + '%', lastX + 10, lastY + 3);
+  }
+
+  // Edge annotation
+  if (prices.length > 0) {
+    const lastP = prices[prices.length - 1];
+    const edge = Math.abs(oracleVal - lastP);
+    const midY = (oracleY + y(lastP)) / 2;
+    ctx.fillStyle = edge >= 5 ? '#f0b429' : '#5a6a7e';
+    ctx.font = '9px JetBrains Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText(edge > 0 ? '← ' + edge + '% edge' : '= fair', pad.left + 10, midY);
+  }
+}
+
+// ─── Boot ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  refreshAll();
+  fetchAndRenderCharts();
+  connectSSE();
+  // Periodic refresh
+  setInterval(refreshAll, 60000);
+  setInterval(fetchAndRenderCharts, 60000);
+});
+
+</script>
+</body>
+</html>

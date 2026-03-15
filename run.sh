@@ -35,6 +35,12 @@ case $ACTION in
     cd nerve && python3 news_rss.py
     ;;
 
+  dashboard|dash|ui)
+    echo "  Starting ORACLE Dashboard on http://localhost:3000"
+    echo ""
+    python3 server.py
+    ;;
+
   simulate)
     echo "  Simulation targets ready in seeds/"
     echo ""
@@ -51,12 +57,13 @@ case $ACTION in
   *)
     echo "Usage: ./run.sh [command]"
     echo ""
-    echo "  full      - Run complete scan (Polymarket + Reddit + FRED + News + Score)"
-    echo "  markets   - Scan Polymarket only"
-    echo "  reddit    - Scan Reddit only"
-    echo "  fred      - Fetch economic data only"
-    echo "  news      - Fetch news headlines only"
-    echo "  simulate  - Show simulation targets"
+    echo "  full       - Run complete scan (Polymarket + Reddit + FRED + News + Score)"
+    echo "  dashboard  - Launch live dashboard on http://localhost:3000"
+    echo "  markets    - Scan Polymarket only"
+    echo "  reddit     - Scan Reddit only"
+    echo "  fred       - Fetch economic data only"
+    echo "  news       - Fetch news headlines only"
+    echo "  simulate   - Show simulation targets"
     echo ""
     ;;
 esac

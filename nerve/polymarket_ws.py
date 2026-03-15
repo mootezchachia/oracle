@@ -34,13 +34,24 @@ def is_sentiment_driven(question: str) -> float:
         if skip in q:
             return 0.0
 
-    high = ["approval", "favorability", "popularity", "public opinion"]
+    high = ["approval", "favorability", "popularity", "public opinion",
+            "approval rating", "job approval", "net approval", "disapproval"]
     med_high = ["midterm", "election", "win the house", "senate", "sweep",
-                "ceasefire", "peace deal", "protests", "boycott", "recession"]
-    med = ["tariff", "regulation", "ban", "impeach", "resign", "policy",
-           "executive order", "supreme court", "consumer confidence"]
+                "ceasefire", "peace deal", "protests", "boycott", "recession",
+                "impeach", "indictment", "conviction", "resign",
+                "war", "invasion", "conflict", "escalation",
+                "iran", "ukraine", "taiwan", "china", "nato", "russia",
+                "trump", "biden"]
+    med = ["tariff", "regulation", "ban", "policy",
+           "executive order", "supreme court", "consumer confidence",
+           "oil", "crude", "opec", "energy crisis",
+           "trade war", "sanctions", "embargo",
+           "debt ceiling", "government shutdown", "default",
+           "stimulus", "infrastructure", "spending bill"]
     low = ["fed decision", "interest rate", "gdp", "inflation", "cpi",
-           "earnings", "stock price"]
+           "earnings", "stock price", "fed rate", "rate cut", "rate hike",
+           "unemployment", "jobs report", "payrolls", "housing",
+           "bitcoin", "crypto", "etf"]
 
     for kw in high:
         if kw in q: return 1.0
@@ -77,7 +88,8 @@ def score_market(m: dict) -> dict | None:
             elif days <= 30: timing = 0.7
             elif days <= 90: timing = 0.4
             else: timing = 0.2
-        except: pass
+        except Exception:
+            pass
 
     vol_score = min(1.0, math.log10(max(volume, 1)) / 7)
     edge_score = sentiment * vol_score * timing
@@ -110,7 +122,7 @@ def scan_all(pages=4, per_page=50) -> list:
         try:
             markets = fetch_markets(limit=per_page, offset=page * per_page)
         except Exception as e:
-            print(f"  ⚠ Page {page+1} failed: {e}")
+            print(f"  Page {page+1} failed: {e}")
             continue
 
         for m in markets:
@@ -140,7 +152,7 @@ def print_targets(markets: list, limit=15):
     top = markets[:limit]
     print(f"  Found {len(markets)} sentiment-driven markets.\n")
     print(f"  {'#':<4} {'Score':<7} {'S':<5} {'V':<5} {'T':<5} {'Vol':>12}  Question")
-    print(f"  {'─'*80}")
+    print(f"  {'---'*27}")
     for i, m in enumerate(top, 1):
         q = m["question"][:50] + ("..." if len(m["question"]) > 50 else "")
         print(f"  {i:<4} {m['edge_score']:<7} {m['sentiment_weight']:<5} "

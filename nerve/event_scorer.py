@@ -4,6 +4,7 @@ and assembles seed documents for simulation.
 """
 
 import json
+import math
 import re
 import time
 from datetime import datetime, timezone
@@ -16,89 +17,181 @@ from fred_watcher import scan_fred
 from news_rss import scan_news
 
 
-# ─── Narrative Ambiguity Detection ────────────────────────────────
+# --- Narrative Ambiguity Detection ------------------------------------
 
 # Events that can be interpreted multiple ways score highest
 AMBIGUOUS_PATTERNS = {
-    # Pattern: (keywords, competing narratives)
     "fed_hold": {
-        "keywords": ["fed", "rate", "hold", "pause", "unchanged"],
+        "keywords": ["fed", "rate", "hold", "pause", "unchanged", "fomc", "federal reserve", "powell"],
         "narratives": [
-            "Economy too weak to raise → bearish signal",
-            "Inflation under control, steady hand → bullish signal"
+            "Economy too weak to raise -> bearish signal",
+            "Inflation under control, steady hand -> bullish signal"
         ],
         "ambiguity": 0.85,
     },
     "fed_cut": {
-        "keywords": ["fed", "rate cut", "lower rates", "easing"],
+        "keywords": ["fed", "rate cut", "lower rates", "easing", "fed rate", "dovish", "pivot"],
         "narratives": [
-            "Economy needs rescue → recession fear",
-            "Inflation beaten, growth ahead → bullish"
+            "Economy needs rescue -> recession fear",
+            "Inflation beaten, growth ahead -> bullish"
         ],
         "ambiguity": 0.8,
     },
-    "military_action": {
-        "keywords": ["strike", "military", "bomb", "attack", "troops", "operation"],
+    "fed_hike": {
+        "keywords": ["fed", "rate hike", "raise rates", "hawkish", "tightening", "higher rates"],
         "narratives": [
-            "Strength projection → rally around the flag → approval up",
-            "Costly escalation → war fatigue → approval down"
+            "Inflation still hot -> pain ahead -> bearish",
+            "Economy strong enough to handle it -> confidence signal"
+        ],
+        "ambiguity": 0.75,
+    },
+    "military_action": {
+        "keywords": ["strike", "military", "bomb", "attack", "troops", "operation", "missile",
+                      "airstrike", "invasion", "deploy", "war"],
+        "narratives": [
+            "Strength projection -> rally around the flag -> approval up",
+            "Costly escalation -> war fatigue -> approval down"
         ],
         "ambiguity": 0.9,
     },
     "ceasefire_signal": {
-        "keywords": ["ceasefire", "peace", "negotiate", "diplomatic", "talks"],
+        "keywords": ["ceasefire", "peace", "negotiate", "diplomatic", "talks", "truce",
+                      "de-escalation", "deal", "accord", "agreement"],
         "narratives": [
-            "De-escalation → stability → positive for incumbents",
-            "Weakness/capitulation → seen as giving in → negative for hawks"
+            "De-escalation -> stability -> positive for incumbents",
+            "Weakness/capitulation -> seen as giving in -> negative for hawks"
         ],
         "ambiguity": 0.75,
     },
-    "economic_data": {
-        "keywords": ["jobs", "unemployment", "cpi", "inflation", "gdp", "retail"],
+    "iran_tensions": {
+        "keywords": ["iran", "tehran", "irgc", "sanctions", "nuclear", "enrichment",
+                      "strait of hormuz", "persian gulf", "proxy"],
         "narratives": [
-            "Data better than expected → economy resilient → bullish",
-            "Data worse than expected → recession approaching → bearish"
+            "Escalation -> oil spike -> inflation -> bearish for markets",
+            "Contained tensions -> rally on resolution -> bullish"
+        ],
+        "ambiguity": 0.85,
+    },
+    "oil_energy": {
+        "keywords": ["oil", "crude", "opec", "brent", "wti", "petroleum", "energy",
+                      "barrel", "gasoline", "fuel", "natural gas"],
+        "narratives": [
+            "Price spike -> inflation -> consumer squeeze -> bearish",
+            "Price drop -> lower input costs -> growth boost -> bullish"
+        ],
+        "ambiguity": 0.8,
+    },
+    "economic_data": {
+        "keywords": ["jobs", "unemployment", "cpi", "inflation", "gdp", "retail",
+                      "payrolls", "nonfarm", "pce", "manufacturing", "services",
+                      "housing", "consumer spending", "wages", "labor"],
+        "narratives": [
+            "Data better than expected -> economy resilient -> bullish",
+            "Data worse than expected -> recession approaching -> bearish"
         ],
         "ambiguity": 0.7,
+    },
+    "recession_fear": {
+        "keywords": ["recession", "downturn", "contraction", "slowdown", "layoffs",
+                      "default", "debt ceiling", "yield curve", "inversion"],
+        "narratives": [
+            "Hard landing -> deep recession -> bearish across board",
+            "Soft landing -> brief dip -> buying opportunity -> bullish"
+        ],
+        "ambiguity": 0.8,
+    },
+    "tariff_trade": {
+        "keywords": ["tariff", "trade", "import", "export", "duties", "trade war",
+                      "trade deal", "customs", "wto", "trade deficit", "protectionism"],
+        "narratives": [
+            "Tariffs protect domestic industry -> bullish for local",
+            "Trade war escalation -> supply chain disruption -> bearish"
+        ],
+        "ambiguity": 0.75,
     },
     "tariff_ruling": {
-        "keywords": ["tariff", "trade", "court", "ruling", "scotus", "import"],
+        "keywords": ["tariff", "court", "ruling", "scotus", "supreme court",
+                      "unconstitutional", "legal challenge", "overturn"],
         "narratives": [
-            "Tariffs blocked → free trade wins → business positive",
-            "Tariffs blocked → presidential authority weakened → political crisis"
+            "Tariffs blocked -> free trade wins -> business positive",
+            "Tariffs blocked -> presidential authority weakened -> political crisis"
         ],
         "ambiguity": 0.7,
     },
-    "approval_shift": {
-        "keywords": ["approval", "poll", "survey", "favorability", "disapproval"],
+    "trump_action": {
+        "keywords": ["trump", "executive order", "truth social", "mar-a-lago",
+                      "indictment", "trial", "conviction", "pardon", "maga"],
         "narratives": [
-            "Temporary fluctuation → reversion to mean",
-            "Structural shift → new baseline → cascading effects on midterms"
+            "Base energized -> fundraising surge -> stronger position",
+            "Legal jeopardy -> distraction -> weakened position"
         ],
-        "ambiguity": 0.6,
+        "ambiguity": 0.85,
     },
-    "election_development": {
-        "keywords": ["midterm", "election", "ballot", "candidate", "primary", "campaign"],
+    "approval_shift": {
+        "keywords": ["approval", "poll", "survey", "favorability", "disapproval",
+                      "approval rating", "job approval", "net approval", "gallup"],
         "narratives": [
-            "Enthusiasm gap favors challengers → wave incoming",
-            "Incumbency advantage holds → status quo prevails"
+            "Temporary fluctuation -> reversion to mean",
+            "Structural shift -> new baseline -> cascading effects on midterms"
         ],
         "ambiguity": 0.65,
+    },
+    "election_development": {
+        "keywords": ["midterm", "election", "ballot", "candidate", "primary", "campaign",
+                      "vote", "electoral", "swing state", "battleground", "turnout",
+                      "early voting", "absentee"],
+        "narratives": [
+            "Enthusiasm gap favors challengers -> wave incoming",
+            "Incumbency advantage holds -> status quo prevails"
+        ],
+        "ambiguity": 0.7,
+    },
+    "ukraine_conflict": {
+        "keywords": ["ukraine", "kyiv", "zelensky", "nato", "putin", "russia",
+                      "donbas", "crimea", "offensive", "counteroffensive"],
+        "narratives": [
+            "Escalation -> energy crisis -> global instability -> bearish",
+            "Resolution in sight -> reconstruction boom -> bullish"
+        ],
+        "ambiguity": 0.85,
+    },
+    "china_taiwan": {
+        "keywords": ["china", "taiwan", "beijing", "xi jinping", "strait",
+                      "pla", "chips", "semiconductor", "decoupling", "south china sea"],
+        "narratives": [
+            "Military escalation -> supply chain catastrophe -> bearish",
+            "Diplomatic thaw -> trade normalization -> bullish"
+        ],
+        "ambiguity": 0.9,
+    },
+    "nato_alliance": {
+        "keywords": ["nato", "alliance", "article 5", "defense spending",
+                      "collective defense", "member", "expansion"],
+        "narratives": [
+            "Alliance strengthening -> deterrence -> stability",
+            "Burden-sharing tensions -> weakened unity -> instability"
+        ],
+        "ambiguity": 0.7,
     },
 }
 
 
 def detect_narrative_ambiguity(text: str) -> tuple:
     """Detect if text matches ambiguous event patterns.
-    Returns (ambiguity_score, matched_pattern, narratives)."""
+    Returns (ambiguity_score, matched_pattern, narratives).
+    Uses partial matching: 1 keyword = reduced score, 2+ = full scoring."""
     text_lower = text.lower()
     best_match = None
     best_score = 0.0
 
     for pattern_name, pattern in AMBIGUOUS_PATTERNS.items():
         match_count = sum(1 for kw in pattern["keywords"] if kw in text_lower)
-        if match_count >= 2:  # need at least 2 keyword matches
-            score = pattern["ambiguity"] * (match_count / len(pattern["keywords"]))
+        if match_count >= 1:
+            # With 1 match, give 60% credit; with 2+ scale up
+            keyword_ratio = match_count / len(pattern["keywords"])
+            coverage = max(0.6, keyword_ratio * 2.0)  # boost coverage
+            coverage = min(coverage, 1.0)
+            score = pattern["ambiguity"] * coverage
             if score > best_score:
                 best_score = score
                 best_match = pattern_name
@@ -109,7 +202,7 @@ def detect_narrative_ambiguity(text: str) -> tuple:
             best_match,
             AMBIGUOUS_PATTERNS[best_match]["narratives"]
         )
-    return (0.1, "unknown", ["Standard interpretation"])
+    return (0.15, "unknown", ["Standard interpretation"])
 
 
 def map_event_to_markets(event_text: str, markets: list) -> list:
@@ -117,12 +210,12 @@ def map_event_to_markets(event_text: str, markets: list) -> list:
     event_lower = event_text.lower()
     affected = []
 
-    # Keyword extraction from event
-    event_words = set(re.findall(r'\b[a-z]{4,}\b', event_lower))
+    # Keyword extraction from event (include 3-letter words too)
+    event_words = set(re.findall(r'\b[a-z]{3,}\b', event_lower))
 
     for m in markets:
         q_lower = m["question"].lower()
-        q_words = set(re.findall(r'\b[a-z]{4,}\b', q_lower))
+        q_words = set(re.findall(r'\b[a-z]{3,}\b', q_lower))
 
         # Calculate overlap
         overlap = event_words & q_words
@@ -131,10 +224,10 @@ def map_event_to_markets(event_text: str, markets: list) -> list:
         # Boost for high-sentiment markets
         relevance *= (1 + m.get("sentiment_weight", 0))
 
-        if relevance > 0.15:
+        if relevance > 0.1:
             affected.append({
                 **m,
-                "relevance": round(relevance, 3),
+                "relevance": round(min(relevance, 1.0), 3),
                 "matching_words": list(overlap)[:10],
             })
 
@@ -143,38 +236,63 @@ def map_event_to_markets(event_text: str, markets: list) -> list:
 
 
 def get_repricing_window() -> tuple:
-    """Estimate current repricing window based on time of day."""
+    """Estimate current repricing window based on time of day and day of week."""
     now = datetime.now(timezone.utc)
     hour_utc = now.hour
     day = now.strftime("%A")
 
-    # US market hours: roughly 14:00-22:00 UTC (9am-5pm ET)
-    if 14 <= hour_utc <= 22:
-        return (0.3, "US active trading — fast absorption, small window")
-    elif 22 < hour_utc or hour_utc < 6:
-        return (0.9, "US sleeping — slow absorption, large window (6-10 hours)")
-    elif 6 <= hour_utc < 14:
-        return (0.6, "US pre-market — moderate absorption, medium window")
+    # Check weekend first
+    if day in ("Saturday", "Sunday"):
+        return (0.85, f"Weekend ({day}) -- thin market, large window")
 
-    if day in ["Saturday", "Sunday"]:
-        return (0.85, f"Weekend ({day}) — thin market, large window")
+    # US market hours: roughly 14:00-21:00 UTC (9am-4pm ET)
+    if 14 <= hour_utc < 21:
+        return (0.35, "US active trading -- fast absorption, small window")
+    elif 21 <= hour_utc or hour_utc < 6:
+        return (0.9, "US closed/sleeping -- slow absorption, large window (6-10 hours)")
+    elif 6 <= hour_utc < 10:
+        return (0.7, "US overnight/Asia active -- moderate-large window")
+    elif 10 <= hour_utc < 14:
+        return (0.55, "US pre-market -- moderate absorption, medium window")
 
     return (0.5, "Normal trading conditions")
 
 
 def score_event(event_text: str, markets: list) -> dict:
-    """Score an event for ORACLE simulation potential."""
+    """Score an event for ORACLE simulation potential.
+    Produces scores in the 0.3-0.9 range for genuinely important events."""
     ambiguity, pattern, narratives = detect_narrative_ambiguity(event_text)
     affected = map_event_to_markets(event_text, markets)
     window_score, window_desc = get_repricing_window()
 
-    market_relevance = min(1.0, sum(m["relevance"] for m in affected[:3]))
-    volume_potential = 0.0
+    # Market relevance: sum top 3, but use a floor so matched events score decently
+    raw_relevance = sum(m["relevance"] for m in affected[:3])
+    market_relevance = min(1.0, raw_relevance)
+    # Give a minimum relevance if we have any affected markets
+    if affected:
+        market_relevance = max(market_relevance, 0.3)
+
+    # Volume potential with logarithmic scaling
+    volume_potential = 0.1  # floor
     if affected:
         max_vol = max(m.get("volume", 0) for m in affected)
-        volume_potential = min(1.0, (max_vol / 1_000_000) ** 0.3)
+        if max_vol > 0:
+            # log10(1000)=3 -> 0.43, log10(100000)=5 -> 0.71, log10(1M)=6 -> 0.86
+            volume_potential = min(1.0, math.log10(max(max_vol, 1)) / 7)
+            volume_potential = max(volume_potential, 0.15)
 
-    event_score = ambiguity * market_relevance * window_score * max(volume_potential, 0.1)
+    # Weighted combination instead of pure multiplication (which crushes scores)
+    # Ambiguity and market_relevance are most important
+    event_score = (
+        0.35 * ambiguity +
+        0.25 * market_relevance +
+        0.20 * window_score +
+        0.10 * volume_potential +
+        0.10 * (ambiguity * market_relevance)  # interaction term
+    )
+
+    # Clamp to reasonable range
+    event_score = max(0.05, min(0.95, event_score))
 
     return {
         "event": event_text,
@@ -197,7 +315,7 @@ def score_event(event_text: str, markets: list) -> dict:
     }
 
 
-# ─── Seed Document Builder ────────────────────────────────────────
+# --- Seed Document Builder --------------------------------------------
 
 def build_seed(event_score: dict, reddit_posts: list = None,
                fred_data: dict = None, news: list = None) -> str:
@@ -268,31 +386,31 @@ def run_full_scan() -> dict:
     results = {}
 
     # 1. Scan Polymarket
-    print("─── STEP 1/5: Scanning Polymarket ───")
+    print("--- STEP 1/5: Scanning Polymarket ---")
     markets = scan_markets()
     results["markets"] = markets
-    print(f"  → {len(markets)} sentiment-driven markets found\n")
+    print(f"  -> {len(markets)} sentiment-driven markets found\n")
 
     # 2. Scan Reddit
-    print("─── STEP 2/5: Scanning Reddit ───")
+    print("--- STEP 2/5: Scanning Reddit ---")
     reddit_posts = scan_reddit()
     results["reddit"] = reddit_posts
-    print(f"  → {len(reddit_posts)} posts tracked\n")
+    print(f"  -> {len(reddit_posts)} posts tracked\n")
 
     # 3. Scan FRED
-    print("─── STEP 3/5: Fetching Economic Data ───")
+    print("--- STEP 3/5: Fetching Economic Data ---")
     fred_data = scan_fred()
     results["fred"] = fred_data
-    print(f"  → {len(fred_data)} series fetched\n")
+    print(f"  -> {len(fred_data)} series fetched\n")
 
     # 4. Scan News
-    print("─── STEP 4/5: Fetching News ───")
+    print("--- STEP 4/5: Fetching News ---")
     news = scan_news()
     results["news"] = news
-    print(f"  → {len(news)} headlines collected\n")
+    print(f"  -> {len(news)} headlines collected\n")
 
     # 5. Score top events
-    print("─── STEP 5/5: Scoring Events & Building Seeds ───")
+    print("--- STEP 5/5: Scoring Events & Building Seeds ---")
 
     # Use top Reddit posts + news headlines as potential events
     event_candidates = []
