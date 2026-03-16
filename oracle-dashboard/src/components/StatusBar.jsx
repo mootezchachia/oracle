@@ -3,7 +3,7 @@ const SOURCES = ["MARKETS", "REDDIT", "NEWS", "FRED"];
 export default function StatusBar({ status }) {
   const counts = status?.counts ?? {};
   const scans = status?.scans ?? 0;
-  const errors = status?.errors ?? 0;
+  const errors = Array.isArray(status?.errors) ? status.errors.length : (status?.errors ?? 0);
   const lastScan = status?.last_scan
     ? new Date(status.last_scan).toLocaleTimeString("en-US", {
         hour: "2-digit",

@@ -12,9 +12,10 @@ export default function EconPanel({ indicators }) {
     return `${prefix}${Math.abs(c) > 100 ? c.toFixed(1) : c.toFixed(2)}`;
   };
 
-  const getTrend = (trend) => {
-    if (trend === 'up') return { symbol: '▲', color: 'text-green' };
-    if (trend === 'down') return { symbol: '▼', color: 'text-red' };
+  const getTrend = (ind) => {
+    const dir = ind.trend || ind.direction || 'flat';
+    if (dir === 'up') return { symbol: '▲', color: 'text-green' };
+    if (dir === 'down') return { symbol: '▼', color: 'text-red' };
     return { symbol: '●', color: 'text-text-2' };
   };
 
@@ -28,7 +29,7 @@ export default function EconPanel({ indicators }) {
       </div>
       <div className="max-h-[420px] overflow-y-auto">
         {(indicators || []).map((ind, i) => {
-          const trend = getTrend(ind.trend);
+          const trend = getTrend(ind);
           return (
             <div
               key={ind.id || i}

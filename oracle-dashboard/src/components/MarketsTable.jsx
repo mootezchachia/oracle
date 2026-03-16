@@ -43,10 +43,10 @@ export default function MarketsTable({ markets }) {
               </div>
               <div className="flex items-center gap-2 justify-center">
                 <span className="bg-green-dim text-green text-[10px] font-mono font-semibold px-2 py-0.5 rounded">
-                  YES {(yes * 100).toFixed(0)}¢
+                  YES {Math.round(yes)}¢
                 </span>
                 <span className="bg-red-dim text-red text-[10px] font-mono font-semibold px-2 py-0.5 rounded">
-                  NO {(no * 100).toFixed(0)}¢
+                  NO {Math.round(no)}¢
                 </span>
               </div>
               <div className="text-[10px] font-mono text-text-2 text-right">
