@@ -59,12 +59,12 @@ export default function Header({ status, onScan }) {
         {/* UTC clock */}
         <span className="text-text-2 tabular-nums">{utc}</span>
 
-        {/* Scan button */}
+        {/* Refresh button */}
         <button
           onClick={onScan}
           className="px-3 py-1 border border-border bg-bg-3 text-text-1 text-[10px] tracking-[0.15em] hover:border-gold hover:text-gold transition-colors"
         >
-          SCAN NOW
+          REFRESH
         </button>
       </div>
     </header>

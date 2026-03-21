@@ -1,5 +1,17 @@
 {
+  "buildCommand": "cd oracle-dashboard && npm install && npm run build",
+  "outputDirectory": "oracle-dashboard/dist",
+  "framework": null,
   "rewrites": [
-    { "source": "/rss", "destination": "/api/rss" }
+    { "source": "/api/(.*)", "destination": "/api/$1" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" }
+      ]
+    }
   ]
 }

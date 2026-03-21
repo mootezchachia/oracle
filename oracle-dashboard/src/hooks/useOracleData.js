@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const ENDPOINTS = ['markets', 'reddit', 'news', 'fred', 'predictions', 'events', 'status', 'price-history']
+const ENDPOINTS = ['markets', 'reddit', 'news', 'fred', 'predictions', 'status', 'price-history', 'portfolio']
 
 async function fetchJSON(endpoint) {
   try {
@@ -19,8 +19,8 @@ export function useOracleData(interval = 60000) {
     news: [],
     fred: [],
     predictions: [],
-    events: [],
     priceHistory: {},
+    portfolio: null,
     status: null,
     loading: true,
     lastUpdate: null,
@@ -35,9 +35,9 @@ export function useOracleData(interval = 60000) {
       news: results[2].value || prev.news,
       fred: results[3].value || prev.fred,
       predictions: results[4].value || prev.predictions,
-      events: results[5].value || prev.events,
-      status: results[6].value || prev.status,
-      priceHistory: results[7].value || prev.priceHistory,
+      status: results[5].value || prev.status,
+      priceHistory: results[6].value || prev.priceHistory,
+      portfolio: results[7].value || prev.portfolio,
       loading: false,
       lastUpdate: Date.now(),
     }))
@@ -49,10 +49,5 @@ export function useOracleData(interval = 60000) {
     return () => clearInterval(id)
   }, [refresh, interval])
 
-  const triggerScan = useCallback(() => {
-    fetch('/api/scan', { method: 'POST' })
-    setTimeout(refresh, 15000)
-  }, [refresh])
-
-  return { ...data, refresh, triggerScan }
+  return { ...data, refresh }
 }

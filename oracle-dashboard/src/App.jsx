@@ -2,6 +2,7 @@ import { useOracleData } from './hooks/useOracleData'
 import Header from './components/Header'
 import Ticker from './components/Ticker'
 import PredictionCard from './components/PredictionCard'
+import PortfolioPanel from './components/PortfolioPanel'
 import MarketsTable from './components/MarketsTable'
 import RedditFeed from './components/RedditFeed'
 import NewsFeed from './components/NewsFeed'
@@ -11,7 +12,7 @@ import StatusBar from './components/StatusBar'
 export default function App() {
   const {
     markets, reddit, news, fred, predictions, priceHistory,
-    status, loading, triggerScan
+    portfolio, status, loading, refresh
   } = useOracleData(60000)
 
   const activePreds = predictions.filter(p => p.market)
@@ -29,10 +30,17 @@ export default function App() {
 
   return (
     <div className="min-h-screen pb-10">
-      <Header status={status} onScan={triggerScan} />
+      <Header status={status} onScan={refresh} />
       <Ticker markets={markets} reddit={reddit} />
 
       <main className="p-4 max-w-[1800px] mx-auto grid grid-cols-3 gap-3">
+        {/* Portfolio — full width */}
+        {portfolio && (
+          <div className="col-span-3">
+            <PortfolioPanel portfolio={portfolio} />
+          </div>
+        )}
+
         {/* Prediction Cards — full width */}
         <div className="col-span-3 space-y-3">
           {activePreds.length > 0 ? (
