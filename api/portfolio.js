@@ -1,15 +1,5 @@
-const TRADES = [
-  { id: 1, number: 1, slug: "us-x-iran-ceasefire-by-march-31", question: "US x Iran ceasefire by March 31?", side: "no", entry_price: 0.86, shares: 581.40, invested: 500, date: "2026-03-15" },
-  { id: 2, number: 2, slug: "will-crude-oil-cl-hit-high-120-by-end-of-march-766-813-597", question: "Oil $120 by end of March?", side: "yes", entry_price: 0.411, shares: 1217.11, invested: 500, date: "2026-03-15" },
-  { id: 3, number: 3, slug: "us-x-iran-ceasefire-by-may-31-313", question: "Iran ceasefire by May 31?", side: "no", entry_price: 0.51, shares: 980.39, invested: 500, date: "2026-03-15" },
-  { id: 4, number: 4, slug: "will-crude-oil-cl-hit-high-140-by-end-of-march-934-621", question: "Oil $140 by end of March?", side: "no", entry_price: 0.80, shares: 625.00, invested: 500, date: "2026-03-15" },
-  { id: 5, number: 5, slug: "will-the-iranian-regime-fall-by-the-end-of-2026", question: "Iranian regime fall before 2027?", side: "no", entry_price: 0.63, shares: 793.65, invested: 500, date: "2026-03-15" },
-  { id: 6, number: 6, slug: "us-x-iran-ceasefire-by-june-30-752", question: "Iran ceasefire by June 30?", side: "no", entry_price: 0.416, shares: 1201.70, invested: 500, date: "2026-03-15" },
-  { id: 7, number: 7, slug: "will-russia-enter-druzkhivka-by-june-30-933-897", question: "Russia enter Druzhkivka by June 30?", side: "no", entry_price: 0.76, shares: 658.29, invested: 500, date: "2026-03-15" },
-];
-
-const CASH = 6500;
-const STARTING_BALANCE = 10000;
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -22,6 +12,24 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Read portfolio from shared data file (written by executor + manual)
+    const portfolioPath = join(process.cwd(), 'nerve', 'data', 'virtual_portfolio.json');
+    let portfolio;
+
+    if (existsSync(portfolioPath)) {
+      portfolio = JSON.parse(readFileSync(portfolioPath, 'utf8'));
+    } else {
+      return res.status(200).json({
+        account: { starting_balance: 10000, cash: 10000, positions_value: 0, total_value: 10000, pnl: 0, pnl_pct: 0 },
+        positions: [],
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    const TRADES = portfolio.trades.filter(t => t.status === "open" || !t.status);
+    const CASH = portfolio.account.cash;
+    const STARTING_BALANCE = portfolio.account.starting_balance;
+
     // Fetch all market prices in parallel
     const results = await Promise.allSettled(
       TRADES.map((trade) =>
@@ -57,7 +65,7 @@ export default async function handler(req, res) {
           status = pnl > 0.5 ? "winning" : pnl < -0.5 ? "losing" : "flat";
           live = true;
         } catch (e) {
-          // outcomePrices parse failed, leave as null
+          // outcomePrices parse failed
         }
       }
 
@@ -73,6 +81,12 @@ export default async function handler(req, res) {
         live,
       };
     });
+
+    // Also include closed trades for history
+    const closedTrades = (portfolio.trades || []).filter(t => t.status === "closed").map(t => ({
+      ...t,
+      live: false,
+    }));
 
     const livePositions = positions.filter((p) => p.live);
     const total_invested = livePositions.reduce((s, p) => s + p.invested, 0);
@@ -90,7 +104,8 @@ export default async function handler(req, res) {
         pnl: total_pnl,
         pnl_pct: total_pnl_pct,
       },
-      positions,
+      positions: [...positions, ...closedTrades],
+      trade_count: portfolio.trades.length,
       updated_at: new Date().toISOString(),
     });
   } catch (err) {

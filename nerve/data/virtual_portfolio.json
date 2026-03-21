@@ -1,0 +1,99 @@
+{
+  "account": {
+    "starting_balance": 10000,
+    "cash": 6500
+  },
+  "trades": [
+    {
+      "id": 1,
+      "number": 1,
+      "slug": "us-x-iran-ceasefire-by-march-31",
+      "question": "US x Iran ceasefire by March 31?",
+      "side": "no",
+      "entry_price": 0.86,
+      "shares": 581.40,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 2,
+      "number": 2,
+      "slug": "will-crude-oil-cl-hit-high-120-by-end-of-march-766-813-597",
+      "question": "Oil $120 by end of March?",
+      "side": "yes",
+      "entry_price": 0.411,
+      "shares": 1217.11,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 3,
+      "number": 3,
+      "slug": "us-x-iran-ceasefire-by-may-31-313",
+      "question": "Iran ceasefire by May 31?",
+      "side": "no",
+      "entry_price": 0.51,
+      "shares": 980.39,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 4,
+      "number": 4,
+      "slug": "will-crude-oil-cl-hit-high-140-by-end-of-march-934-621",
+      "question": "Oil $140 by end of March?",
+      "side": "no",
+      "entry_price": 0.80,
+      "shares": 625.00,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 5,
+      "number": 5,
+      "slug": "will-the-iranian-regime-fall-by-the-end-of-2026",
+      "question": "Iranian regime fall before 2027?",
+      "side": "no",
+      "entry_price": 0.63,
+      "shares": 793.65,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 6,
+      "number": 6,
+      "slug": "us-x-iran-ceasefire-by-june-30-752",
+      "question": "Iran ceasefire by June 30?",
+      "side": "no",
+      "entry_price": 0.416,
+      "shares": 1201.70,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 7,
+      "number": 7,
+      "slug": "will-russia-enter-druzkhivka-by-june-30-933-897",
+      "question": "Russia enter Druzhkivka by June 30?",
+      "side": "no",
+      "entry_price": 0.76,
+      "shares": 658.29,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    }
+  ]
+}
