@@ -7,12 +7,13 @@ import MarketsTable from './components/MarketsTable'
 import RedditFeed from './components/RedditFeed'
 import NewsFeed from './components/NewsFeed'
 import EconPanel from './components/EconPanel'
+import SignalPanel from './components/SignalPanel'
 import StatusBar from './components/StatusBar'
 
 export default function App() {
   const {
     markets, reddit, news, fred, predictions, priceHistory,
-    portfolio, status, loading, refresh
+    portfolio, signals, status, loading, refresh
   } = useOracleData(60000)
 
   const activePreds = predictions.filter(p => p.market)
@@ -78,14 +79,21 @@ export default function App() {
           <EconPanel indicators={fred} />
         </div>
 
-        {/* Reddit — 2 cols */}
-        <div className="col-span-2">
-          <RedditFeed posts={reddit} />
-        </div>
+        {/* Signal Fusion — 2 cols */}
+        {signals && (
+          <div className="col-span-2">
+            <SignalPanel signals={signals} />
+          </div>
+        )}
 
         {/* News — 1 col */}
         <div className="col-span-1">
           <NewsFeed items={news} />
+        </div>
+
+        {/* Reddit — 2 cols */}
+        <div className="col-span-2">
+          <RedditFeed posts={reddit} />
         </div>
       </main>
 

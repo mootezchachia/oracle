@@ -1,4 +1,4 @@
-const SOURCES = ["MARKETS", "REDDIT", "NEWS", "FRED"];
+const SOURCES = ["MARKETS", "REDDIT", "NEWS", "FRED", "SIGNALS", "CRYPTO"];
 
 export default function StatusBar({ status }) {
   const counts = status?.counts ?? {};

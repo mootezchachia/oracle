@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const ENDPOINTS = ['markets', 'reddit', 'news', 'fred', 'predictions', 'status', 'price-history', 'portfolio']
+const ENDPOINTS = ['markets', 'reddit', 'news', 'fred', 'predictions', 'status', 'price-history', 'portfolio', 'signals', 'crypto']
 
 async function fetchJSON(endpoint) {
   try {
@@ -22,6 +22,8 @@ export function useOracleData(interval = 60000) {
     priceHistory: {},
     portfolio: null,
     status: null,
+    signals: null,
+    crypto: null,
     loading: true,
     lastUpdate: null,
   })
@@ -38,6 +40,8 @@ export function useOracleData(interval = 60000) {
       status: results[5].value || prev.status,
       priceHistory: results[6].value || prev.priceHistory,
       portfolio: results[7].value || prev.portfolio,
+      signals: results[8].value || prev.signals,
+      crypto: results[9].value || prev.crypto,
       loading: false,
       lastUpdate: Date.now(),
     }))
