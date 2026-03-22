@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const NAV_TABS = ["DASHBOARD", "MARKETS", "SIGNALS", "PREDICTIONS"];
 
-export default function Header({ status, onScan }) {
+export default function Header({ status, onScan, activeTab, onTabChange }) {
   const [utc, setUtc] = useState(formatUTC());
 
   useEffect(() => {
@@ -31,11 +31,12 @@ export default function Header({ status, onScan }) {
         {NAV_TABS.map((tab) => (
           <button
             key={tab}
-            className={
-              tab === "DASHBOARD"
+            onClick={() => onTabChange(tab)}
+            className={`transition-colors ${
+              activeTab === tab
                 ? "text-gold"
-                : "text-text-2 hover:text-text-1 transition-colors"
-            }
+                : "text-text-2 hover:text-text-1"
+            }`}
           >
             {tab}
           </button>
