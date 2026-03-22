@@ -24,8 +24,11 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <div className="w-8 h-8 border-2 border-border border-t-gold rounded-full animate-spin" />
-        <div className="text-[10px] tracking-[3px] uppercase text-text-2">
+        <div className="relative">
+          <div className="w-12 h-12 rounded-full border-2 border-border border-t-gold animate-spin" />
+          <div className="absolute inset-0 w-12 h-12 rounded-full border-2 border-transparent border-b-gold/30 animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }} />
+        </div>
+        <div className="text-[10px] tracking-[3px] uppercase text-text-2 animate-pulse">
           Loading ORACLE data feeds...
         </div>
       </div>
@@ -37,24 +40,24 @@ export default function App() {
       <Header status={status} onScan={refresh} activeTab={activeTab} onTabChange={setActiveTab} />
       <Ticker markets={markets} reddit={reddit} />
 
-      <main className="p-4 max-w-[1800px] mx-auto">
+      <main className="p-3 sm:p-4 max-w-[1800px] mx-auto">
 
         {/* ─── DASHBOARD TAB ─── */}
         {activeTab === 'DASHBOARD' && (
-          <div className="grid grid-cols-3 gap-3">
+          <div key="dashboard" className="tab-content grid grid-cols-1 lg:grid-cols-3 gap-3">
             {portfolio && (
-              <div className="col-span-3">
+              <div className="col-span-1 lg:col-span-3">
                 <PortfolioPanel portfolio={portfolio} />
               </div>
             )}
 
             {strategy100 && (
-              <div className="col-span-3">
+              <div className="col-span-1 lg:col-span-3">
                 <Strategy100Panel data={strategy100} />
               </div>
             )}
 
-            <div className="col-span-3 space-y-3">
+            <div className="col-span-1 lg:col-span-3 space-y-3">
               {activePreds.length > 0 ? (
                 activePreds.map(pred => {
                   const slug = Object.keys(priceHistory).find(s =>
@@ -70,7 +73,7 @@ export default function App() {
                   )
                 })
               ) : (
-                <div className="bg-bg-1 border border-border rounded-lg p-8 text-center">
+                <div className="bg-bg-1 border border-border rounded-lg p-8 text-center animate-fade-in">
                   <div className="text-text-2 text-sm">
                     No active predictions. Run a simulation to generate one.
                   </div>
@@ -78,7 +81,7 @@ export default function App() {
               )}
             </div>
 
-            <div className="col-span-2">
+            <div className="col-span-1 lg:col-span-2">
               <MarketsTable markets={markets} />
             </div>
             <div className="col-span-1">
@@ -86,7 +89,7 @@ export default function App() {
             </div>
 
             {signals && (
-              <div className="col-span-2">
+              <div className="col-span-1 lg:col-span-2">
                 <SignalPanel signals={signals} />
               </div>
             )}
@@ -95,7 +98,7 @@ export default function App() {
               <NewsFeed items={news} />
             </div>
 
-            <div className="col-span-2">
+            <div className="col-span-1 lg:col-span-2">
               <RedditFeed posts={reddit} />
             </div>
           </div>
@@ -103,17 +106,17 @@ export default function App() {
 
         {/* ─── MARKETS TAB ─── */}
         {activeTab === 'MARKETS' && (
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-3">
+          <div key="markets" className="tab-content grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div className="col-span-1 lg:col-span-3">
               <MarketsTable markets={markets} />
             </div>
-            <div className="col-span-2">
+            <div className="col-span-1 lg:col-span-2">
               <EconPanel indicators={fred} />
             </div>
             <div className="col-span-1">
               <NewsFeed items={news} />
             </div>
-            <div className="col-span-2">
+            <div className="col-span-1 lg:col-span-2">
               <RedditFeed posts={reddit} />
             </div>
           </div>
@@ -121,14 +124,14 @@ export default function App() {
 
         {/* ─── SIGNALS TAB ─── */}
         {activeTab === 'SIGNALS' && (
-          <div className="grid grid-cols-3 gap-3">
+          <div key="signals" className="tab-content grid grid-cols-1 lg:grid-cols-3 gap-3">
             {signals && (
-              <div className="col-span-3">
+              <div className="col-span-1 lg:col-span-3">
                 <SignalPanel signals={signals} />
               </div>
             )}
             {strategy100 && (
-              <div className="col-span-3">
+              <div className="col-span-1 lg:col-span-3">
                 <Strategy100Panel data={strategy100} />
               </div>
             )}
@@ -137,13 +140,13 @@ export default function App() {
 
         {/* ─── PREDICTIONS TAB ─── */}
         {activeTab === 'PREDICTIONS' && (
-          <div className="grid grid-cols-3 gap-3">
+          <div key="predictions" className="tab-content grid grid-cols-1 lg:grid-cols-3 gap-3">
             {portfolio && (
-              <div className="col-span-3">
+              <div className="col-span-1 lg:col-span-3">
                 <PortfolioPanel portfolio={portfolio} />
               </div>
             )}
-            <div className="col-span-3 space-y-3">
+            <div className="col-span-1 lg:col-span-3 space-y-3">
               {activePreds.length > 0 ? (
                 activePreds.map(pred => {
                   const slug = Object.keys(priceHistory).find(s =>
@@ -159,7 +162,7 @@ export default function App() {
                   )
                 })
               ) : (
-                <div className="bg-bg-1 border border-border rounded-lg p-8 text-center">
+                <div className="bg-bg-1 border border-border rounded-lg p-8 text-center animate-fade-in">
                   <div className="text-text-2 text-sm">
                     No active predictions yet.
                   </div>

@@ -18,23 +18,23 @@ export default function Strategy100Panel({ data }) {
   };
 
   return (
-    <div className="bg-bg-1 border border-border rounded-lg overflow-hidden">
+    <div className="bg-bg-1 border border-border rounded-lg overflow-hidden card-hover">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-bg-2">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-bg-2 to-bg-1">
         <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest uppercase text-text-2">
           <span style={{ color: "#f59e0b" }}>$</span> $100 STRATEGY
-          <span className="bg-bg-3 text-text-1 text-[9px] px-1.5 rounded-full">
+          <span className="bg-orange/15 text-orange text-[9px] px-2 py-0.5 rounded-full border border-orange/20">
             PAPER
           </span>
         </div>
         <div className="flex items-center gap-3 text-[10px] font-mono">
           <span className="text-text-2">
             VALUE{" "}
-            <span className="text-text-0 font-semibold">
+            <span className="text-text-0 font-semibold tabular-nums">
               ${account.total_value?.toFixed(2) || "100.00"}
             </span>
           </span>
-          <span className={`font-semibold ${returnColor}`}>
+          <span className={`font-semibold tabular-nums ${returnColor}`}>
             {returnPrefix}${account.total_return?.toFixed(2) || "0.00"} ({returnPrefix}
             {account.total_return_pct?.toFixed(1) || "0.0"}%)
           </span>
@@ -47,7 +47,7 @@ export default function Strategy100Panel({ data }) {
           {Object.entries(allocations).map(([key, alloc]) => {
             const pct = alloc.budget > 0 ? (alloc.invested / alloc.budget) * 100 : 0;
             return (
-              <div key={key} className="bg-bg-1 py-2 relative overflow-hidden">
+              <div key={key} className="bg-bg-1 py-2.5 relative overflow-hidden hover:bg-bg-2/30 transition-colors">
                 <div
                   className="absolute inset-0 opacity-10"
                   style={{
@@ -56,13 +56,13 @@ export default function Strategy100Panel({ data }) {
                   }}
                 />
                 <div className="relative">
-                  <div className="text-text-2" style={{ color: strategyColors[key] }}>
+                  <div className="font-semibold" style={{ color: strategyColors[key] }}>
                     {strategyLabels[key] || key.toUpperCase()}
                   </div>
-                  <div className="text-text-0 font-semibold">
+                  <div className="text-text-0 font-semibold tabular-nums">
                     ${alloc.invested?.toFixed(0)} / ${alloc.budget?.toFixed(0)}
                   </div>
-                  <div className="text-text-2">
+                  <div className="text-text-2 tabular-nums">
                     ${alloc.cash?.toFixed(2)} free
                   </div>
                 </div>
@@ -74,26 +74,26 @@ export default function Strategy100Panel({ data }) {
 
       {/* Stats bar */}
       {stats && (
-        <div className="grid grid-cols-4 gap-px bg-border text-center text-[9px] font-mono">
-          <div className="bg-bg-1 py-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border text-center text-[9px] font-mono">
+          <div className="bg-bg-1 py-2 hover:bg-bg-2/30 transition-colors">
             <span className="text-text-2">TRADES </span>
-            <span className="text-text-0">{stats.total_trades}</span>
+            <span className="text-text-0 tabular-nums">{stats.total_trades}</span>
           </div>
-          <div className="bg-bg-1 py-1.5">
+          <div className="bg-bg-1 py-2 hover:bg-bg-2/30 transition-colors">
             <span className="text-text-2">W/L </span>
-            <span className="text-green">{stats.wins}</span>
+            <span className="text-green tabular-nums">{stats.wins}</span>
             <span className="text-text-2">/</span>
-            <span className="text-red">{stats.losses}</span>
+            <span className="text-red tabular-nums">{stats.losses}</span>
           </div>
-          <div className="bg-bg-1 py-1.5">
+          <div className="bg-bg-1 py-2 hover:bg-bg-2/30 transition-colors">
             <span className="text-text-2">P&L </span>
-            <span className={stats.total_pnl >= 0 ? "text-green" : "text-red"}>
+            <span className={`tabular-nums ${stats.total_pnl >= 0 ? "text-green" : "text-red"}`}>
               {stats.total_pnl >= 0 ? "+" : ""}${stats.total_pnl?.toFixed(2)}
             </span>
           </div>
-          <div className="bg-bg-1 py-1.5">
+          <div className="bg-bg-1 py-2 hover:bg-bg-2/30 transition-colors">
             <span className="text-text-2">CASH </span>
-            <span className="text-text-0">${account.total_cash?.toFixed(2)}</span>
+            <span className="text-text-0 tabular-nums">${account.total_cash?.toFixed(2)}</span>
           </div>
         </div>
       )}
@@ -111,13 +111,15 @@ export default function Strategy100Panel({ data }) {
             return (
               <div
                 key={pos.id || i}
-                className="grid grid-cols-[auto_1fr_70px_70px_90px] items-center px-4 py-2 border-b border-border hover:bg-bg-2 gap-2"
+                className="grid grid-cols-[auto_1fr_70px_70px_90px] items-center px-4 py-2 border-b border-border hover:bg-bg-2/70 gap-2 transition-colors"
               >
                 <span
                   className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded"
                   style={{
                     color: strategyColors[pos.strategy] || "#888",
                     background: `${strategyColors[pos.strategy] || "#888"}20`,
+                    borderWidth: 1,
+                    borderColor: `${strategyColors[pos.strategy] || "#888"}30`,
                   }}
                 >
                   {strategyLabels[pos.strategy] || pos.strategy?.toUpperCase()}
@@ -130,15 +132,15 @@ export default function Strategy100Panel({ data }) {
                     {pos.side?.toUpperCase()} @ {(pos.entry_price * 100).toFixed(0)}c
                   </div>
                 </div>
-                <div className="text-[10px] font-mono text-text-1 text-center">
+                <div className="text-[10px] font-mono text-text-1 text-center tabular-nums">
                   {pos.current_price != null
                     ? `${(pos.current_price * 100).toFixed(0)}c`
                     : "..."}
                 </div>
-                <div className="text-[10px] font-mono text-center text-text-0">
+                <div className="text-[10px] font-mono text-center text-text-0 tabular-nums">
                   ${pos.invested?.toFixed(0)}
                 </div>
-                <div className={`text-[10px] font-mono font-semibold text-right ${posColor}`}>
+                <div className={`text-[10px] font-mono font-semibold text-right tabular-nums ${posColor}`}>
                   {hasPnl
                     ? `${pnlPrefix}$${pos.pnl.toFixed(2)} (${pnlPrefix}${pos.pnl_pct?.toFixed(1)}%)`
                     : "..."}
@@ -148,14 +150,14 @@ export default function Strategy100Panel({ data }) {
           })
         ) : (
           <div className="px-4 py-6 text-center text-[10px] text-text-2">
-            No open positions. Run <code className="bg-bg-3 px-1 rounded">./run.sh 100 auto</code> to start.
+            No open positions. Run <code className="bg-bg-3 px-1.5 py-0.5 rounded text-text-1">./run.sh 100 auto</code> to start.
           </div>
         )}
 
         {/* Closed trades */}
         {closed_trades.length > 0 && (
           <>
-            <div className="px-4 py-1.5 bg-bg-2 text-[9px] text-text-2 font-mono tracking-wider">
+            <div className="px-4 py-1.5 bg-bg-2/80 text-[9px] text-text-2 font-mono tracking-wider">
               CLOSED ({closed_trades.length})
             </div>
             {closed_trades.map((t, i) => {
@@ -164,7 +166,7 @@ export default function Strategy100Panel({ data }) {
               return (
                 <div
                   key={`closed-${t.id || i}`}
-                  className="grid grid-cols-[auto_1fr_90px] items-center px-4 py-1.5 border-b border-border opacity-60 gap-2"
+                  className="grid grid-cols-[auto_1fr_90px] items-center px-4 py-1.5 border-b border-border opacity-50 hover:opacity-75 gap-2 transition-opacity"
                 >
                   <span
                     className="text-[8px] font-mono px-1.5 py-0.5 rounded"
@@ -178,7 +180,7 @@ export default function Strategy100Panel({ data }) {
                   <div className="text-[10px] font-mono text-text-2 truncate">
                     {t.question}
                   </div>
-                  <div className={`text-[10px] font-mono font-semibold text-right ${pnlColor}`}>
+                  <div className={`text-[10px] font-mono font-semibold text-right tabular-nums ${pnlColor}`}>
                     {pnlPfx}${t.pnl?.toFixed(2)} ({t.close_reason})
                   </div>
                 </div>
