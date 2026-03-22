@@ -8,12 +8,13 @@ import RedditFeed from './components/RedditFeed'
 import NewsFeed from './components/NewsFeed'
 import EconPanel from './components/EconPanel'
 import SignalPanel from './components/SignalPanel'
+import Strategy100Panel from './components/Strategy100Panel'
 import StatusBar from './components/StatusBar'
 
 export default function App() {
   const {
     markets, reddit, news, fred, predictions, priceHistory,
-    portfolio, signals, status, loading, refresh
+    portfolio, signals, strategy100, status, loading, refresh
   } = useOracleData(60000)
 
   const activePreds = predictions.filter(p => p.market)
@@ -39,6 +40,13 @@ export default function App() {
         {portfolio && (
           <div className="col-span-3">
             <PortfolioPanel portfolio={portfolio} />
+          </div>
+        )}
+
+        {/* $100 Strategy — full width */}
+        {strategy100 && (
+          <div className="col-span-3">
+            <Strategy100Panel data={strategy100} />
           </div>
         )}
 
