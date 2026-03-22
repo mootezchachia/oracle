@@ -1,0 +1,7 @@
+nerve/
+predictions/
+data/
+*.py
+run.sh
+ARCHITECTURE.md
+PERFECT-SETUP.md
