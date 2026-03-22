@@ -130,9 +130,20 @@ export default function App() {
                 <SignalPanel signals={signals} />
               </div>
             )}
+          </div>
+        )}
+
+        {/* ─── STRATEGY TAB ─── */}
+        {activeTab === 'STRATEGY' && (
+          <div key="strategy" className="tab-content grid grid-cols-1 lg:grid-cols-3 gap-3">
             {strategy100 && (
               <div className="col-span-1 lg:col-span-3">
                 <Strategy100Panel data={strategy100} />
+              </div>
+            )}
+            {portfolio && (
+              <div className="col-span-1 lg:col-span-3">
+                <PortfolioPanel portfolio={portfolio} />
               </div>
             )}
           </div>
