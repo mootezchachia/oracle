@@ -15,6 +15,7 @@ Portfolio: Separate $100 virtual account (does not touch main $10K portfolio).
 
 import json
 import math
+import os
 import time
 import requests
 from datetime import datetime, timezone
@@ -754,6 +755,126 @@ def print_portfolio():
 
 
 # ═══════════════════════════════════════════════════════════════════
+# AUTONOMOUS LOOP
+# ═══════════════════════════════════════════════════════════════════
+
+LOOP_LOG = DATA_DIR / "strategy_100_loop.jsonl"
+
+
+def run_autonomous(interval_minutes: int = 5, max_cycles: int = 0):
+    """Run the strategy engine autonomously on a loop.
+
+    Args:
+        interval_minutes: Minutes between scans (default 5)
+        max_cycles: Max cycles to run (0 = infinite)
+    """
+    import signal as sig
+
+    running = True
+
+    def handle_stop(signum, frame):
+        nonlocal running
+        print(f"\n  Received stop signal. Finishing current cycle...")
+        running = False
+
+    sig.signal(sig.SIGINT, handle_stop)
+    sig.signal(sig.SIGTERM, handle_stop)
+
+    cycle = 0
+    errors_in_row = 0
+    max_errors = 5  # pause longer after repeated failures
+
+    print(f"  AUTONOMOUS MODE")
+    print(f"  Interval: {interval_minutes}m | Max cycles: {'infinite' if max_cycles == 0 else max_cycles}")
+    print(f"  Stop: Ctrl+C or kill PID {os.getpid()}")
+    print(f"  Log: {LOOP_LOG}\n")
+
+    while running:
+        cycle += 1
+        if max_cycles > 0 and cycle > max_cycles:
+            print(f"\n  Max cycles ({max_cycles}) reached. Stopping.")
+            break
+
+        cycle_start = time.time()
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+        print(f"\n  {'='*50}")
+        print(f"  CYCLE #{cycle} — {timestamp}")
+        print(f"  {'='*50}\n")
+
+        cycle_log = {
+            "cycle": cycle,
+            "timestamp": now_iso(),
+            "executed": [],
+            "closed": [],
+            "errors": [],
+        }
+
+        try:
+            # Run full scan with auto-execute
+            results = run_full_scan(auto_execute=True)
+
+            cycle_log["executed"] = [
+                {"id": t["id"], "strategy": t["strategy"], "slug": t["slug"],
+                 "side": t["side"], "price": t["entry_price"], "invested": t["invested"]}
+                for t in results.get("executed", [])
+            ]
+            cycle_log["closed"] = [
+                {"id": t["id"], "slug": t["slug"], "pnl": t.get("pnl", 0),
+                 "reason": t.get("close_reason", "")}
+                for t in results.get("closed", [])
+            ]
+            cycle_log["bonds_found"] = len(results.get("bonds", []))
+            cycle_log["expertise_found"] = len(results.get("expertise", []))
+            cycle_log["crashes_found"] = len(results.get("flash_crash", []))
+
+            # Print summary
+            n_exec = len(results.get("executed", []))
+            n_closed = len(results.get("closed", []))
+            portfolio = load_portfolio()
+            total_cash = portfolio["account"]["total_cash"]
+            total_invested = sum(a["invested"] for a in portfolio["allocations"].values())
+            total_pnl = portfolio["stats"]["total_pnl"]
+
+            print(f"\n  --- Cycle #{cycle} Summary ---")
+            print(f"  New trades: {n_exec}  Closed: {n_closed}")
+            print(f"  Cash: ${total_cash:.2f}  Invested: ${total_invested:.2f}  "
+                  f"P&L: ${total_pnl:+.2f}")
+
+            errors_in_row = 0
+            cycle_log["status"] = "ok"
+
+        except Exception as e:
+            errors_in_row += 1
+            cycle_log["status"] = "error"
+            cycle_log["errors"].append(str(e))
+            print(f"\n  CYCLE ERROR: {e}")
+
+            if errors_in_row >= max_errors:
+                print(f"  {max_errors} errors in a row — backing off to {interval_minutes * 3}m")
+
+        # Log cycle
+        cycle_log["duration_seconds"] = round(time.time() - cycle_start, 1)
+        append_jsonl(LOOP_LOG, cycle_log)
+
+        if not running:
+            break
+
+        # Sleep until next cycle (with early exit on stop signal)
+        sleep_minutes = interval_minutes * 3 if errors_in_row >= max_errors else interval_minutes
+        next_run = datetime.now(timezone.utc).strftime("%H:%M:%S")
+        print(f"\n  Sleeping {sleep_minutes}m... (next scan ~{next_run})")
+
+        sleep_end = time.time() + (sleep_minutes * 60)
+        while running and time.time() < sleep_end:
+            time.sleep(1)
+
+    # Final status
+    print(f"\n  Autonomous mode stopped after {cycle} cycles.")
+    print_portfolio()
+
+
+# ═══════════════════════════════════════════════════════════════════
 # CLI
 # ═══════════════════════════════════════════════════════════════════
 
@@ -769,6 +890,22 @@ def main():
         results = run_full_scan(auto_execute=True)
         print(f"\n  Executed {len(results['executed'])} new trades")
         print_portfolio()
+
+    elif cmd == "auto":
+        # Autonomous loop
+        interval = 5  # default 5 minutes
+        max_cycles = 0  # infinite
+        if len(sys.argv) > 2:
+            try:
+                interval = int(sys.argv[2])
+            except ValueError:
+                pass
+        if len(sys.argv) > 3:
+            try:
+                max_cycles = int(sys.argv[3])
+            except ValueError:
+                pass
+        run_autonomous(interval_minutes=interval, max_cycles=max_cycles)
 
     elif cmd == "status":
         print_portfolio()
@@ -815,13 +952,14 @@ def main():
             print(f"      {c['question'][:60]}")
 
     else:
-        print(f"  Usage: python3 strategy_100.py [scan|status|check|reset|bonds|crashes]")
-        print(f"    scan     Scan all strategies and auto-execute (default)")
-        print(f"    status   Show portfolio status")
-        print(f"    check    Check TP/SL exits")
-        print(f"    reset    Reset to fresh $100")
-        print(f"    bonds    Scan bond opportunities only")
-        print(f"    crashes  Scan crash opportunities only")
+        print(f"  Usage: python3 strategy_100.py [command]")
+        print(f"    scan         Scan all strategies and auto-execute (default)")
+        print(f"    auto [m] [n] Autonomous mode: scan every m minutes, n cycles (0=infinite)")
+        print(f"    status       Show portfolio status")
+        print(f"    check        Check TP/SL exits")
+        print(f"    reset        Reset to fresh $100")
+        print(f"    bonds        Scan bond opportunities only")
+        print(f"    crashes      Scan crash opportunities only")
 
     print()
 
