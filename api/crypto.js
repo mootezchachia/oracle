@@ -1,42 +1,49 @@
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
+/**
+ * /api/crypto — Live cryptocurrency data
+ *
+ * Fetches real-time prices from CoinGecko (free, no key needed).
+ * Returns current prices, 24h change, and sparkline data.
+ */
+
+const COINS = ["bitcoin", "ethereum", "solana", "dogecoin", "cardano", "ripple"];
 
 export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
+
   try {
-    const dataDir = join(process.cwd(), 'nerve', 'data');
+    // Fetch current prices + 24h change + 7d sparkline
+    const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${COINS.join(",")}&order=market_cap_desc&sparkline=true&price_change_percentage=1h,24h,7d`;
 
-    // Read cached candles
-    const candlePath = join(dataDir, 'candle_cache.json');
-    let candles = {};
-    if (existsSync(candlePath)) {
-      candles = JSON.parse(readFileSync(candlePath, 'utf8'));
-    }
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    if (!r.ok) throw new Error(`CoinGecko API ${r.status}`);
 
-    // Read price feed
-    const pricePath = join(dataDir, 'price_feed.jsonl');
-    let prices = [];
-    if (existsSync(pricePath)) {
-      const lines = readFileSync(pricePath, 'utf8').trim().split('\n').filter(Boolean);
-      prices = lines.slice(-20).map(l => {
-        try { return JSON.parse(l); } catch { return null; }
-      }).filter(Boolean);
-    }
+    const coins = await r.json();
 
-    // Read 15m market cache
-    const marketsPath = join(dataDir, 'crypto_15m_markets.json');
-    let markets = null;
-    if (existsSync(marketsPath)) {
-      markets = JSON.parse(readFileSync(marketsPath, 'utf8'));
-    }
+    const prices = coins.map((c) => ({
+      id: c.id,
+      symbol: c.symbol.toUpperCase(),
+      name: c.name,
+      price: c.current_price,
+      change_1h: c.price_change_percentage_1h_in_currency,
+      change_24h: c.price_change_percentage_24h_in_currency,
+      change_7d: c.price_change_percentage_7d_in_currency,
+      high_24h: c.high_24h,
+      low_24h: c.low_24h,
+      market_cap: c.market_cap,
+      volume_24h: c.total_volume,
+      sparkline: c.sparkline_in_7d?.price?.slice(-48) || [], // last 2 days of 7d hourly
+    }));
 
-    res.setHeader('Cache-Control', 's-maxage=15, stale-while-revalidate=30');
     res.status(200).json({
-      candles,
       prices,
-      markets,
       updated: new Date().toISOString(),
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Return empty but valid response on error
+    res.status(200).json({
+      prices: [],
+      updated: new Date().toISOString(),
+      error: err.message,
+    });
   }
 }
