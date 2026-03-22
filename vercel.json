@@ -3,6 +3,12 @@
   "outputDirectory": "oracle-dashboard/dist",
   "framework": null,
   "rewrites": [],
+  "crons": [
+    {
+      "path": "/api/strategy100-run",
+      "schedule": "0 8 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

@@ -287,6 +287,11 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "no-cache");
 
+  // Accept GET (manual/cron) and POST (QStash)
+  if (req.method !== "GET" && req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
   if (!isRedisConfigured()) {
     return res.status(500).json({
       error: "Upstash Redis not configured",
