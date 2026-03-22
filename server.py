@@ -11,7 +11,10 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 import requests
-import feedparser
+try:
+    import feedparser
+except ImportError:
+    feedparser = None
 from flask import Flask, jsonify, send_from_directory, Response
 
 # ─── Config ──────────────────────────────────────────────────────────────────
@@ -341,6 +344,9 @@ def fetch_fred():
 
 def fetch_news():
     """Fetch headlines from RSS feeds"""
+    if feedparser is None:
+        return []
+
     results = []
     seen = set()
 

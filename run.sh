@@ -41,6 +41,18 @@ case $ACTION in
     python3 server.py
     ;;
 
+  daemon|bg|start)
+    exec ./oracle-daemon.sh start
+    ;;
+
+  stop)
+    exec ./oracle-daemon.sh stop
+    ;;
+
+  logs)
+    exec ./oracle-daemon.sh logs
+    ;;
+
   simulate)
     echo "  Simulation targets ready in seeds/"
     echo ""
@@ -156,7 +168,10 @@ case $ACTION in
     echo "  crypto-alpha  Run crypto 15m pipeline (prices → market discovery → analysis)"
     echo ""
     echo "  ─── Operations ───"
-    echo "  dashboard     Launch live dashboard on http://localhost:3000"
+    echo "  start         Start ORACLE daemon in background (dashboard + auto-trader)"
+    echo "  stop          Stop the daemon"
+    echo "  logs          Tail daemon logs"
+    echo "  dashboard     Launch live dashboard in foreground"
     echo "  simulate      Show simulation targets"
     echo "  alerts        Check for alerts and notifications"
     echo "  calibrate     Check resolutions and print scoreboard"
