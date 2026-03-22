@@ -1,0 +1,107 @@
+{
+  "account": {
+    "starting_balance": 100.0,
+    "total_cash": 30.0
+  },
+  "allocations": {
+    "bonds": {
+      "budget": 60.0,
+      "cash": 0.0,
+      "invested": 60.0
+    },
+    "expertise": {
+      "budget": 30.0,
+      "cash": 30.0,
+      "invested": 0.0
+    },
+    "flash_crash": {
+      "budget": 10.0,
+      "cash": 0.0,
+      "invested": 10.0
+    }
+  },
+  "trades": [
+    {
+      "id": 1,
+      "strategy": "bonds",
+      "slug": "will-anthropic-have-the-best-ai-model-for-coding-on-march-31",
+      "question": "Will Anthropic have the best AI model for coding on March 31?",
+      "side": "no",
+      "entry_price": 0.934,
+      "shares": 16.06,
+      "invested": 15.0,
+      "expected_return_pct": 7.07,
+      "date": "2026-03-22",
+      "status": "open",
+      "volume": 97681.60656699997
+    },
+    {
+      "id": 2,
+      "strategy": "bonds",
+      "slug": "will-alexandria-ocasio-cortez-win-the-2028-us-presidential-election",
+      "question": "Will Alexandria Ocasio-Cortez win the 2028 US Presidential Election?",
+      "side": "no",
+      "entry_price": 0.9525,
+      "shares": 15.748,
+      "invested": 15.0,
+      "expected_return_pct": 4.99,
+      "date": "2026-03-22",
+      "status": "open",
+      "volume": 9961442.757727826
+    },
+    {
+      "id": 3,
+      "strategy": "bonds",
+      "slug": "natoeu-troops-fighting-in-ukraine-in-june-30-2026",
+      "question": "NATO/EU troops fighting in Ukraine in June 30, 2026?",
+      "side": "no",
+      "entry_price": 0.9525,
+      "shares": 15.748,
+      "invested": 15.0,
+      "expected_return_pct": 4.99,
+      "date": "2026-03-22",
+      "status": "open",
+      "volume": 96059.00240900023
+    },
+    {
+      "id": 4,
+      "strategy": "bonds",
+      "slug": "openai-receives-federal-backstop-for-infrastructure-before-july",
+      "question": "OpenAI receives federal backstop for infrastructure before July?",
+      "side": "no",
+      "entry_price": 0.954,
+      "shares": 15.7233,
+      "invested": 15.0,
+      "expected_return_pct": 4.82,
+      "date": "2026-03-22",
+      "status": "open",
+      "volume": 98318.51175599977
+    },
+    {
+      "id": 5,
+      "strategy": "flash_crash",
+      "slug": "will-ethereum-dip-to-1800-in-march-2026",
+      "question": "Will Ethereum dip to $1,800 in March?",
+      "side": "yes",
+      "entry_price": 0.165,
+      "shares": 60.6061,
+      "invested": 10.0,
+      "crash_signal": 0.8151,
+      "upside_pct": 506.06,
+      "date": "2026-03-22",
+      "status": "open",
+      "take_profit_pct": 25.0,
+      "stop_loss_pct": 15.0
+    }
+  ],
+  "stats": {
+    "total_trades": 5,
+    "wins": 0,
+    "losses": 0,
+    "total_pnl": 0.0,
+    "best_trade": 0.0,
+    "worst_trade": 0.0
+  },
+  "created": "2026-03-22T02:07:46.138902+00:00",
+  "last_updated": "2026-03-22T02:07:50.662414+00:00"
+}

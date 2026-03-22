@@ -96,6 +96,10 @@ case $ACTION in
     cd nerve && python3 executor.py
     ;;
 
+  100|strategy|testnet)
+    cd nerve && python3 strategy_100.py ${2:-scan}
+    ;;
+
   # ═══ Combined Pipelines ═══
 
   alpha)
@@ -146,6 +150,7 @@ case $ACTION in
     echo ""
     echo "  ─── Execution ───"
     echo "  executor      Check trade executor status (paper trading)"
+    echo "  100           Run \$100 strategy (scan|status|check|reset|bonds|crashes)"
     echo "  alpha         Run full alpha pipeline (scan → prices → fusion → ensemble)"
     echo "  crypto-alpha  Run crypto 15m pipeline (prices → market discovery → analysis)"
     echo ""
