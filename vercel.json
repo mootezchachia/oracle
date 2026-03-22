@@ -2,9 +2,7 @@
   "buildCommand": "cd oracle-dashboard && npm install && npm run build",
   "outputDirectory": "oracle-dashboard/dist",
   "framework": null,
-  "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ],
+  "rewrites": [],
   "headers": [
     {
       "source": "/api/(.*)",
