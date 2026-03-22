@@ -10,13 +10,14 @@ import NewsFeed from './components/NewsFeed'
 import EconPanel from './components/EconPanel'
 import SignalPanel from './components/SignalPanel'
 import Strategy100Panel from './components/Strategy100Panel'
+import HistoryPanel from './components/HistoryPanel'
 import StatusBar from './components/StatusBar'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('DASHBOARD')
   const {
     markets, reddit, news, fred, predictions, priceHistory,
-    portfolio, signals, strategy100, status, loading, refresh
+    portfolio, signals, strategy100, history, status, loading, refresh
   } = useOracleData(60000)
 
   const activePreds = predictions.filter(p => p.market)
@@ -180,6 +181,13 @@ export default function App() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ─── HISTORY TAB ─── */}
+        {activeTab === 'HISTORY' && (
+          <div key="history" className="tab-content grid grid-cols-1 gap-3">
+            <HistoryPanel history={history} />
           </div>
         )}
 

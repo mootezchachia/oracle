@@ -11,6 +11,9 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const PORTFOLIO_KEY = "oracle:strategy100:portfolio";
+const LOG_KEY = "oracle:strategy100:log";
+const MAIN_PORTFOLIO_KEY = "oracle:portfolio:main";
+const PRICE_HISTORY_KEY = "oracle:price_history";
 
 const EMPTY_PORTFOLIO = {
   account: { starting_balance: 100, total_cash: 100 },
@@ -31,6 +34,11 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
 
   if (req.method === "OPTIONS") return res.status(204).end();
+
+  // History view: ?view=history
+  if (req.query?.view === "history") {
+    return handleHistory(req, res);
+  }
 
   try {
     // Try Redis first, then local file fallback
@@ -110,5 +118,119 @@ export default async function handler(req, res) {
     });
   } catch (err) {
     return res.status(500).json({ error: "Failed to fetch strategy portfolio", detail: err.message });
+  }
+}
+
+async function handleHistory(req, res) {
+  try {
+    const events = [];
+
+    if (isRedisConfigured()) {
+      // 1. Strategy execution logs (cron runs)
+      const execLog = await redisGet(LOG_KEY);
+      if (Array.isArray(execLog)) {
+        for (const entry of execLog) {
+          events.push({
+            type: "scan",
+            timestamp: entry.timestamp || entry.cycle,
+            detail: {
+              markets_scanned: entry.scanned?.total_markets || 0,
+              bonds_found: entry.scanned?.bonds || 0,
+              expertise_found: entry.scanned?.expertise || 0,
+              crashes_found: entry.scanned?.crashes || 0,
+              executed: entry.executed?.length || 0,
+              closed: entry.closed?.length || 0,
+              trades: entry.executed || [],
+              exits: entry.closed || [],
+            },
+          });
+
+          if (Array.isArray(entry.executed)) {
+            for (const t of entry.executed) {
+              events.push({
+                type: "trade_open",
+                timestamp: entry.timestamp || entry.cycle,
+                detail: { strategy: t.strategy, slug: t.slug, id: t.id },
+              });
+            }
+          }
+          if (Array.isArray(entry.closed)) {
+            for (const t of entry.closed) {
+              events.push({
+                type: "trade_close",
+                timestamp: entry.timestamp || entry.cycle,
+                detail: { id: t.id, pnl: t.pnl, reason: t.reason },
+              });
+            }
+          }
+        }
+      }
+
+      // 2. All $100 strategy trades
+      const s100 = await redisGet(PORTFOLIO_KEY);
+      if (s100 && Array.isArray(s100.trades)) {
+        for (const t of s100.trades) {
+          events.push({
+            type: t.status === "closed" ? "trade_closed" : "trade_opened",
+            timestamp: t.closed_at || t.date || s100.created,
+            detail: {
+              id: t.id, strategy: t.strategy, slug: t.slug, question: t.question,
+              side: t.side, entry_price: t.entry_price, exit_price: t.exit_price || null,
+              invested: t.invested, shares: t.shares,
+              pnl: t.pnl || null, pnl_pct: t.pnl_pct || null,
+              close_reason: t.close_reason || null, status: t.status, portfolio: "$100",
+            },
+          });
+        }
+      }
+
+      // 3. Main $10K portfolio trades
+      const main = await redisGet(MAIN_PORTFOLIO_KEY);
+      if (main && Array.isArray(main.trades)) {
+        for (const t of main.trades) {
+          events.push({
+            type: t.status === "closed" ? "trade_closed" : "trade_opened",
+            timestamp: t.closed_at || t.date || main.created,
+            detail: {
+              id: `main-${t.id || t.slug}`, strategy: "manual", slug: t.slug,
+              question: t.question || t.market, side: t.side,
+              entry_price: t.entry_price, exit_price: t.exit_price || null,
+              invested: t.invested, shares: t.shares,
+              pnl: t.pnl || null, pnl_pct: t.pnl_pct || null,
+              close_reason: t.close_reason || null, status: t.status, portfolio: "$10K",
+            },
+          });
+        }
+      }
+
+      // 4. Price history summary
+      const priceHistory = await redisGet(PRICE_HISTORY_KEY);
+      if (priceHistory && typeof priceHistory === "object") {
+        for (const [slug, points] of Object.entries(priceHistory)) {
+          if (Array.isArray(points) && points.length > 0) {
+            events.push({
+              type: "price_tracking",
+              timestamp: points[points.length - 1]?.ts || new Date().toISOString(),
+              detail: {
+                slug, data_points: points.length,
+                latest_price: points[points.length - 1]?.price,
+                first_price: points[0]?.price,
+                first_seen: points[0]?.ts,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    events.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+    return res.status(200).json({
+      events,
+      total: events.length,
+      generated_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to fetch history", detail: err.message });
   }
 }
