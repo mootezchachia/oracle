@@ -1,34 +1,57 @@
+/**
+ * ORACLE $100 Strategy — Dashboard Read Endpoint
+ *
+ * Reads portfolio from Upstash Redis (written by strategy100-run cron).
+ * Falls back to local file if Redis not configured.
+ * Enriches open positions with live Polymarket prices.
+ */
+
+import { redisGet, isRedisConfigured } from './lib/redis.js';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+
+const PORTFOLIO_KEY = "oracle:strategy100:portfolio";
+
+const EMPTY_PORTFOLIO = {
+  account: { starting_balance: 100, total_cash: 100 },
+  allocations: {
+    bonds: { budget: 60, cash: 60, invested: 0 },
+    expertise: { budget: 30, cash: 30, invested: 0 },
+    flash_crash: { budget: 10, cash: 10, invested: 0 },
+  },
+  trades: [],
+  stats: { total_trades: 0, wins: 0, losses: 0, total_pnl: 0 },
+  initialized: false,
+};
 
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=120");
+  res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate=60");
 
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
-  }
+  if (req.method === "OPTIONS") return res.status(204).end();
 
   try {
-    const portfolioPath = join(process.cwd(), 'nerve', 'data', 'strategy_100_portfolio.json');
+    // Try Redis first, then local file fallback
+    let portfolio = null;
 
-    if (!existsSync(portfolioPath)) {
-      return res.status(200).json({
-        account: { starting_balance: 100, total_cash: 100 },
-        allocations: {
-          bonds: { budget: 60, cash: 60, invested: 0 },
-          expertise: { budget: 30, cash: 30, invested: 0 },
-          flash_crash: { budget: 10, cash: 10, invested: 0 },
-        },
-        trades: [],
-        stats: { total_trades: 0, wins: 0, losses: 0, total_pnl: 0 },
-        initialized: false,
-      });
+    if (isRedisConfigured()) {
+      portfolio = await redisGet(PORTFOLIO_KEY);
     }
 
-    const portfolio = JSON.parse(readFileSync(portfolioPath, 'utf8'));
+    if (!portfolio) {
+      // Fallback: local file (works in dev or if Redis empty)
+      const filePath = join(process.cwd(), 'nerve', 'data', 'strategy_100_portfolio.json');
+      if (existsSync(filePath)) {
+        portfolio = JSON.parse(readFileSync(filePath, 'utf8'));
+      }
+    }
+
+    if (!portfolio) {
+      return res.status(200).json(EMPTY_PORTFOLIO);
+    }
+
     const openTrades = portfolio.trades.filter(t => t.status === "open");
 
     // Fetch live prices for open positions
@@ -82,6 +105,7 @@ export default async function handler(req, res) {
       positions: livePositions,
       closed_trades: closedTrades,
       stats: portfolio.stats,
+      source: isRedisConfigured() ? "redis" : "file",
       updated_at: new Date().toISOString(),
     });
   } catch (err) {

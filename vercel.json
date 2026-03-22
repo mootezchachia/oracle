@@ -5,6 +5,12 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
+  "crons": [
+    {
+      "path": "/api/strategy100-run",
+      "schedule": "0 */6 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",
