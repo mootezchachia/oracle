@@ -502,6 +502,32 @@ def background_scanner():
         time.sleep(300)  # 5 minutes
 
 
+def background_strategy():
+    """Run $100 strategy loop autonomously every 5 minutes."""
+    import sys
+    sys.path.insert(0, str(ROOT / "nerve"))
+    time.sleep(30)  # let the main scanner warm up first
+
+    while True:
+        try:
+            from strategy_100 import run_full_scan, load_portfolio
+            results = run_full_scan(auto_execute=True)
+            n_exec = len(results.get("executed", []))
+            n_closed = len(results.get("closed", []))
+            p = load_portfolio()
+            pnl = p["stats"]["total_pnl"]
+            cache["status"].setdefault("strategy100", {})
+            cache["status"]["strategy100"] = {
+                "last_run": datetime.now(timezone.utc).isoformat(),
+                "new_trades": n_exec,
+                "closed": n_closed,
+                "total_pnl": pnl,
+            }
+        except Exception as e:
+            cache["status"]["errors"].append(f"Strategy100: {str(e)[:100]}")
+        time.sleep(300)  # 5 minutes
+
+
 # ─── Flask App ───────────────────────────────────────────────────────────────
 
 app = Flask(__name__, static_folder="dashboard")
@@ -765,5 +791,10 @@ if __name__ == "__main__":
     # Start background scanner
     scanner = threading.Thread(target=background_scanner, daemon=True)
     scanner.start()
+
+    # Start $100 strategy loop (scans + trades every 5 min)
+    print("  Starting $100 strategy auto-trader...")
+    strategy = threading.Thread(target=background_strategy, daemon=True)
+    strategy.start()
 
     app.run(host="0.0.0.0", port=3000, debug=False, threaded=True)
