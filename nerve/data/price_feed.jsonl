@@ -3,3 +3,8 @@
 {"symbol": "SOL", "price": 87.4, "source_count": 2, "spread": 0.27, "spread_pct": 0.3147, "prices": {"coinbase": 87.535, "coingecko": 87.26}, "timestamp": "2026-03-22T01:01:50.084909+00:00"}
 {"symbol": "SOL", "price": 87.39, "source_count": 2, "spread": 0.26, "spread_pct": 0.2975, "prices": {"coinbase": 87.52, "coingecko": 87.26}, "timestamp": "2026-03-22T01:01:50.943877+00:00"}
 {"symbol": "SOL", "price": 87.39, "source_count": 2, "spread": 0.26, "spread_pct": 0.2975, "prices": {"coinbase": 87.52, "coingecko": 87.26}, "timestamp": "2026-03-22T01:01:51.631723+00:00"}
+{"symbol": "SOL", "price": 87.41, "source_count": 2, "spread": 0.07, "spread_pct": 0.0801, "prices": {"coinbase": 87.45, "coingecko": 87.38}, "timestamp": "2026-03-22T01:05:00.247519+00:00"}
+{"symbol": "SOL", "price": 87.45, "source_count": 2, "spread": 0.15, "spread_pct": 0.1715, "prices": {"coinbase": 87.53, "coingecko": 87.38}, "timestamp": "2026-03-22T01:05:01.857375+00:00"}
+{"symbol": "SOL", "price": 87.45, "source_count": 2, "spread": 0.15, "spread_pct": 0.1715, "prices": {"coinbase": 87.53, "coingecko": 87.38}, "timestamp": "2026-03-22T01:05:02.607519+00:00"}
+{"symbol": "SOL", "price": 87.46, "source_count": 2, "spread": 0.16, "spread_pct": 0.1772, "prices": {"coinbase": 87.535, "coingecko": 87.38}, "timestamp": "2026-03-22T01:05:03.421405+00:00"}
+{"symbol": "SOL", "price": 87.46, "source_count": 2, "spread": 0.16, "spread_pct": 0.1772, "prices": {"coinbase": 87.535, "coingecko": 87.38}, "timestamp": "2026-03-22T01:05:04.321032+00:00"}

@@ -23,6 +23,7 @@ CANDLE_CACHE = DATA_DIR / "candle_cache.json"
 # Exchange endpoints (no auth needed)
 BINANCE_API = "https://api.binance.com/api/v3"
 COINBASE_API = "https://api.coinbase.com/v2"
+COINBASE_EXCHANGE_API = "https://api.exchange.coinbase.com"
 COINGECKO_API = "https://api.coingecko.com/api/v3"
 
 
@@ -71,6 +72,49 @@ def fetch_binance_klines(symbol: str = "BTCUSDT", interval: str = "15m",
         return candles
     except Exception as e:
         print(f"  Binance klines error: {e}")
+        return []
+
+
+COINBASE_GRANULARITY = {
+    "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "6h": 21600, "1d": 86400,
+}
+
+
+def fetch_coinbase_klines(symbol: str = "BTC-USD", interval: str = "15m",
+                          limit: int = 100) -> list:
+    """Fetch OHLCV candles from Coinbase Exchange API (no auth needed).
+
+    Coinbase returns candles as [timestamp, low, high, open, close, volume].
+    """
+    granularity = COINBASE_GRANULARITY.get(interval)
+    if granularity is None:
+        print(f"  Coinbase klines: unsupported interval {interval}")
+        return []
+    try:
+        r = requests.get(f"{COINBASE_EXCHANGE_API}/products/{symbol}/candles", params={
+            "granularity": granularity,
+        }, timeout=10)
+        r.raise_for_status()
+
+        raw = r.json()
+        candles = []
+        for k in raw:
+            candles.append({
+                "timestamp": datetime.fromtimestamp(k[0], tz=timezone.utc).isoformat(),
+                "open": float(k[3]),
+                "high": float(k[2]),
+                "low": float(k[1]),
+                "close": float(k[4]),
+                "volume": float(k[5]),
+                "close_time": datetime.fromtimestamp(k[0] + granularity, tz=timezone.utc).isoformat(),
+                "trades": 0,
+            })
+
+        # Coinbase returns newest first — reverse to oldest-first
+        candles.reverse()
+        return candles[-limit:]
+    except Exception as e:
+        print(f"  Coinbase klines error: {e}")
         return []
 
 
@@ -177,11 +221,15 @@ def aggregate_price(symbol: str = "BTC") -> dict:
 # ─── Candle Cache (for TA module) ─────────────────────────────────
 
 def get_candles(symbol: str = "BTC", interval: str = "15m", limit: int = 100) -> list:
-    """Get OHLCV candles, using Binance as primary source.
+    """Get OHLCV candles. Tries Binance first, falls back to Coinbase Exchange.
     Results cached to disk for TA module consumption.
     """
     binance_sym = f"{symbol}USDT"
     candles = fetch_binance_klines(binance_sym, interval, limit)
+
+    if not candles:
+        coinbase_sym = f"{symbol}-USD"
+        candles = fetch_coinbase_klines(coinbase_sym, interval, limit)
 
     if candles:
         # Cache for offline use
