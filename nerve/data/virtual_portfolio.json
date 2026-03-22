@@ -1,7 +1,7 @@
 {
   "account": {
     "starting_balance": 10000,
-    "cash": 6500
+    "cash": 7300.82
   },
   "trades": [
     {
@@ -11,7 +11,7 @@
       "question": "US x Iran ceasefire by March 31?",
       "side": "no",
       "entry_price": 0.86,
-      "shares": 581.40,
+      "shares": 581.4,
       "invested": 500,
       "date": "2026-03-15",
       "status": "open",
@@ -27,8 +27,14 @@
       "shares": 1217.11,
       "invested": 500,
       "date": "2026-03-15",
-      "status": "open",
-      "source": "manual"
+      "status": "closed",
+      "source": "manual",
+      "closed_at": "2026-03-22T00:22:22.226005+00:00",
+      "exit_price": 0.165,
+      "current_value": 200.82,
+      "pnl": -299.18,
+      "pnl_pct": -59.84,
+      "close_reason": "Stop loss: -59.8%"
     },
     {
       "id": 3,
@@ -49,12 +55,18 @@
       "slug": "will-crude-oil-cl-hit-high-140-by-end-of-march-934-621",
       "question": "Oil $140 by end of March?",
       "side": "no",
-      "entry_price": 0.80,
-      "shares": 625.00,
+      "entry_price": 0.8,
+      "shares": 625.0,
       "invested": 500,
       "date": "2026-03-15",
-      "status": "open",
-      "source": "manual"
+      "status": "closed",
+      "source": "manual",
+      "closed_at": "2026-03-22T00:22:22.528003+00:00",
+      "exit_price": 0.96,
+      "current_value": 600.0,
+      "pnl": 100.0,
+      "pnl_pct": 20.0,
+      "close_reason": "Take profit: 20.0%"
     },
     {
       "id": 5,
@@ -76,7 +88,7 @@
       "question": "Iran ceasefire by June 30?",
       "side": "no",
       "entry_price": 0.416,
-      "shares": 1201.70,
+      "shares": 1201.7,
       "invested": 500,
       "date": "2026-03-15",
       "status": "open",
