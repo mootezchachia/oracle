@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { STRATEGY_COLORS, STRATEGY_LABELS } from "./Strategy100Panel";
 
 const EVENT_CONFIG = {
   scan: { icon: "~", color: "#8b5cf6", label: "SCAN" },
@@ -15,8 +16,7 @@ function formatTime(ts) {
   if (!ts) return "—";
   const d = new Date(ts);
   if (isNaN(d.getTime())) return ts.slice(0, 10);
-  const now = new Date();
-  const diff = now - d;
+  const diff = Date.now() - d;
   if (diff < 60000) return "just now";
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
@@ -29,6 +29,22 @@ function formatFullDate(ts) {
   const d = new Date(ts);
   if (isNaN(d.getTime())) return ts;
   return d.toISOString().replace("T", " ").slice(0, 19) + " UTC";
+}
+
+function strategyColor(strategy) {
+  return STRATEGY_COLORS[strategy] || "#888";
+}
+
+function StrategyBadge({ strategy }) {
+  const color = strategyColor(strategy);
+  return (
+    <span
+      className="text-[8px] px-1.5 py-0.5 rounded"
+      style={{ color, background: color + "20" }}
+    >
+      {STRATEGY_LABELS[strategy] || strategy?.toUpperCase()}
+    </span>
+  );
 }
 
 function ScanEvent({ detail }) {
@@ -56,7 +72,6 @@ function ScanEvent({ detail }) {
 }
 
 function TradeEvent({ detail }) {
-  const isClose = detail.status === "closed" || detail.exit_price;
   const pnlColor = (detail.pnl || 0) >= 0 ? "text-green" : "text-red";
   const pnlPrefix = (detail.pnl || 0) >= 0 ? "+" : "";
 
@@ -67,36 +82,12 @@ function TradeEvent({ detail }) {
         {detail.portfolio && (
           <span className="text-[8px] bg-bg-3 px-1.5 py-0.5 rounded">{detail.portfolio}</span>
         )}
-        {detail.strategy && (
-          <span
-            className="text-[8px] px-1.5 py-0.5 rounded"
-            style={{
-              color:
-                detail.strategy === "bonds"
-                  ? "#4ade80"
-                  : detail.strategy === "expertise"
-                  ? "#60a5fa"
-                  : detail.strategy === "flash_crash"
-                  ? "#f59e0b"
-                  : "#888",
-              background:
-                (detail.strategy === "bonds"
-                  ? "#4ade80"
-                  : detail.strategy === "expertise"
-                  ? "#60a5fa"
-                  : detail.strategy === "flash_crash"
-                  ? "#f59e0b"
-                  : "#888") + "20",
-            }}
-          >
-            {detail.strategy === "flash_crash" ? "CRASH" : detail.strategy?.toUpperCase()}
-          </span>
-        )}
+        {detail.strategy && <StrategyBadge strategy={detail.strategy} />}
         <span>
           {detail.side?.toUpperCase()} @ {detail.entry_price ? `${(detail.entry_price * 100).toFixed(0)}c` : "—"}
         </span>
         <span>${detail.invested?.toFixed(2)}</span>
-        {isClose && detail.pnl != null && (
+        {detail.status === "closed" && detail.pnl != null && (
           <span className={`font-semibold ${pnlColor}`}>
             {pnlPrefix}${detail.pnl.toFixed(2)} ({pnlPrefix}{detail.pnl_pct?.toFixed(1)}%)
           </span>
@@ -136,6 +127,12 @@ function PriceEvent({ detail }) {
   );
 }
 
+function eventKey(ev, i) {
+  if (ev.detail?.id != null) return `${ev.type}-${ev.detail.id}`;
+  if (ev.detail?.slug) return `${ev.type}-${ev.detail.slug}-${ev.timestamp}`;
+  return `${ev.type}-${i}-${ev.timestamp}`;
+}
+
 export default function HistoryPanel({ history }) {
   const [filter, setFilter] = useState("ALL");
   const [expanded, setExpanded] = useState(new Set());
@@ -153,29 +150,26 @@ export default function HistoryPanel({ history }) {
     });
   }, [history, filter]);
 
-  const toggle = (i) => {
+  const toggle = (key) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(i) ? next.delete(i) : next.add(i);
+      next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
   };
 
-  // Summary stats
   const stats = useMemo(() => {
     if (!history?.events) return null;
-    const all = history.events;
-    const scans = all.filter((e) => e.type === "scan").length;
-    const opens = all.filter(
-      (e) => e.type === "trade_opened" || e.type === "trade_open"
-    ).length;
-    const closes = all.filter(
-      (e) => e.type === "trade_closed" || e.type === "trade_close"
-    ).length;
-    const totalPnl = all
-      .filter((e) => e.type === "trade_closed" && e.detail?.pnl != null)
-      .reduce((s, e) => s + e.detail.pnl, 0);
-    return { scans, opens, closes, totalPnl, total: all.length };
+    let scans = 0, opens = 0, closes = 0, totalPnl = 0;
+    for (const e of history.events) {
+      if (e.type === "scan") scans++;
+      else if (e.type === "trade_opened" || e.type === "trade_open") opens++;
+      else if (e.type === "trade_closed" || e.type === "trade_close") {
+        closes++;
+        if (e.type === "trade_closed" && e.detail?.pnl != null) totalPnl += e.detail.pnl;
+      }
+    }
+    return { scans, opens, closes, totalPnl, total: history.events.length };
   }, [history]);
 
   if (!history || !history.events) {
@@ -188,7 +182,6 @@ export default function HistoryPanel({ history }) {
 
   return (
     <div className="bg-bg-1 border border-border rounded-lg overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-bg-2 to-bg-1">
         <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest uppercase text-text-2">
           <span className="text-gold">~</span> FULL HISTORY
@@ -198,7 +191,6 @@ export default function HistoryPanel({ history }) {
         </div>
       </div>
 
-      {/* Stats bar */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-border text-center text-[9px] font-mono">
           <div className="bg-bg-1 py-2 hover:bg-bg-2/30 transition-colors">
@@ -219,18 +211,13 @@ export default function HistoryPanel({ history }) {
           </div>
           <div className="bg-bg-1 py-2 hover:bg-bg-2/30 transition-colors">
             <span className="text-text-2">REALIZED </span>
-            <span
-              className={`tabular-nums ${
-                stats.totalPnl >= 0 ? "text-green" : "text-red"
-              }`}
-            >
+            <span className={`tabular-nums ${stats.totalPnl >= 0 ? "text-green" : "text-red"}`}>
               {stats.totalPnl >= 0 ? "+" : ""}${stats.totalPnl.toFixed(2)}
             </span>
           </div>
         </div>
       )}
 
-      {/* Filter tabs */}
       <div className="flex items-center gap-1 px-4 py-2 border-b border-border bg-bg-2/50">
         {FILTERS.map((f) => (
           <button
@@ -250,7 +237,6 @@ export default function HistoryPanel({ history }) {
         </span>
       </div>
 
-      {/* Timeline */}
       <div className="max-h-[600px] overflow-y-auto">
         {events.length === 0 ? (
           <div className="px-4 py-8 text-center text-[10px] text-text-2">
@@ -258,21 +244,17 @@ export default function HistoryPanel({ history }) {
           </div>
         ) : (
           events.map((ev, i) => {
-            const cfg = EVENT_CONFIG[ev.type] || {
-              icon: "?",
-              color: "#888",
-              label: ev.type,
-            };
-            const isOpen = expanded.has(i);
+            const cfg = EVENT_CONFIG[ev.type] || { icon: "?", color: "#888", label: ev.type };
+            const key = eventKey(ev, i);
+            const isOpen = expanded.has(key);
 
             return (
               <div
-                key={i}
+                key={key}
                 className="border-b border-border hover:bg-bg-2/40 transition-colors cursor-pointer"
-                onClick={() => toggle(i)}
+                onClick={() => toggle(key)}
               >
                 <div className="flex items-start gap-3 px-4 py-2.5">
-                  {/* Icon */}
                   <div className="flex flex-col items-center mt-0.5">
                     <span
                       className="w-6 h-6 flex items-center justify-center rounded-full text-[10px] font-bold"
@@ -292,7 +274,6 @@ export default function HistoryPanel({ history }) {
                     )}
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span
@@ -309,29 +290,19 @@ export default function HistoryPanel({ history }) {
                       </span>
                     </div>
 
-                    {/* Event-specific content */}
                     {ev.type === "scan" && <ScanEvent detail={ev.detail} />}
-                    {(ev.type === "trade_opened" ||
-                      ev.type === "trade_closed") && (
+                    {(ev.type === "trade_opened" || ev.type === "trade_closed") && (
                       <TradeEvent detail={ev.detail} />
                     )}
                     {(ev.type === "trade_open" || ev.type === "trade_close") && (
                       <div className="text-[10px] font-mono text-text-2">
                         {ev.detail.strategy && (
-                          <span className="text-text-0">
-                            [{ev.detail.strategy}]{" "}
-                          </span>
+                          <span className="text-text-0">[{ev.detail.strategy}] </span>
                         )}
                         {ev.detail.slug || `Trade #${ev.detail.id}`}
                         {ev.detail.pnl != null && (
-                          <span
-                            className={
-                              ev.detail.pnl >= 0 ? "text-green" : "text-red"
-                            }
-                          >
-                            {" "}
-                            {ev.detail.pnl >= 0 ? "+" : ""}$
-                            {ev.detail.pnl.toFixed(2)}
+                          <span className={ev.detail.pnl >= 0 ? "text-green" : "text-red"}>
+                            {" "}{ev.detail.pnl >= 0 ? "+" : ""}${ev.detail.pnl.toFixed(2)}
                           </span>
                         )}
                         {ev.detail.reason && (
@@ -339,16 +310,11 @@ export default function HistoryPanel({ history }) {
                         )}
                       </div>
                     )}
-                    {ev.type === "price_tracking" && (
-                      <PriceEvent detail={ev.detail} />
-                    )}
+                    {ev.type === "price_tracking" && <PriceEvent detail={ev.detail} />}
 
-                    {/* Expanded raw data */}
                     {isOpen && (
                       <div className="mt-2 p-2 bg-bg-3/50 rounded text-[9px] font-mono text-text-2 whitespace-pre-wrap break-all">
-                        <div className="text-text-2 mb-1">
-                          {formatFullDate(ev.timestamp)}
-                        </div>
+                        <div className="text-text-2 mb-1">{formatFullDate(ev.timestamp)}</div>
                         {JSON.stringify(ev.detail, null, 2)}
                       </div>
                     )}

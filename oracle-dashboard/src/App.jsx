@@ -147,6 +147,9 @@ export default function App() {
                 <PortfolioPanel portfolio={portfolio} />
               </div>
             )}
+            <div className="col-span-1 lg:col-span-3">
+              <HistoryPanel history={history} />
+            </div>
           </div>
         )}
 
@@ -181,13 +184,6 @@ export default function App() {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* ─── HISTORY TAB ─── */}
-        {activeTab === 'HISTORY' && (
-          <div key="history" className="tab-content grid grid-cols-1 gap-3">
-            <HistoryPanel history={history} />
           </div>
         )}
 

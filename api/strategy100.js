@@ -121,18 +121,40 @@ export default async function handler(req, res) {
   }
 }
 
+function portfolioTradeEvents(portfolio, label, idFn, strategyFn) {
+  if (!portfolio || !Array.isArray(portfolio.trades)) return [];
+  return portfolio.trades.map(t => ({
+    type: t.status === "closed" ? "trade_closed" : "trade_opened",
+    timestamp: t.closed_at || t.date || portfolio.created,
+    detail: {
+      id: idFn(t), strategy: strategyFn(t), slug: t.slug,
+      question: t.question || t.market, side: t.side,
+      entry_price: t.entry_price, exit_price: t.exit_price || null,
+      invested: t.invested, shares: t.shares,
+      pnl: t.pnl || null, pnl_pct: t.pnl_pct || null,
+      close_reason: t.close_reason || null, status: t.status, portfolio: label,
+    },
+  }));
+}
+
 async function handleHistory(req, res) {
   try {
     const events = [];
 
     if (isRedisConfigured()) {
+      const [execLog, s100, main, priceHistory] = await Promise.all([
+        redisGet(LOG_KEY),
+        redisGet(PORTFOLIO_KEY),
+        redisGet(MAIN_PORTFOLIO_KEY),
+        redisGet(PRICE_HISTORY_KEY),
+      ]);
+
       // 1. Strategy execution logs (cron runs)
-      const execLog = await redisGet(LOG_KEY);
       if (Array.isArray(execLog)) {
         for (const entry of execLog) {
+          const ts = entry.timestamp || entry.cycle;
           events.push({
-            type: "scan",
-            timestamp: entry.timestamp || entry.cycle,
+            type: "scan", timestamp: ts,
             detail: {
               markets_scanned: entry.scanned?.total_markets || 0,
               bonds_found: entry.scanned?.bonds || 0,
@@ -148,8 +170,7 @@ async function handleHistory(req, res) {
           if (Array.isArray(entry.executed)) {
             for (const t of entry.executed) {
               events.push({
-                type: "trade_open",
-                timestamp: entry.timestamp || entry.cycle,
+                type: "trade_open", timestamp: ts,
                 detail: { strategy: t.strategy, slug: t.slug, id: t.id },
               });
             }
@@ -157,8 +178,7 @@ async function handleHistory(req, res) {
           if (Array.isArray(entry.closed)) {
             for (const t of entry.closed) {
               events.push({
-                type: "trade_close",
-                timestamp: entry.timestamp || entry.cycle,
+                type: "trade_close", timestamp: ts,
                 detail: { id: t.id, pnl: t.pnl, reason: t.reason },
               });
             }
@@ -166,45 +186,11 @@ async function handleHistory(req, res) {
         }
       }
 
-      // 2. All $100 strategy trades
-      const s100 = await redisGet(PORTFOLIO_KEY);
-      if (s100 && Array.isArray(s100.trades)) {
-        for (const t of s100.trades) {
-          events.push({
-            type: t.status === "closed" ? "trade_closed" : "trade_opened",
-            timestamp: t.closed_at || t.date || s100.created,
-            detail: {
-              id: t.id, strategy: t.strategy, slug: t.slug, question: t.question,
-              side: t.side, entry_price: t.entry_price, exit_price: t.exit_price || null,
-              invested: t.invested, shares: t.shares,
-              pnl: t.pnl || null, pnl_pct: t.pnl_pct || null,
-              close_reason: t.close_reason || null, status: t.status, portfolio: "$100",
-            },
-          });
-        }
-      }
+      // 2. Portfolio trades ($100 + $10K)
+      events.push(...portfolioTradeEvents(s100, "$100", t => t.id, t => t.strategy));
+      events.push(...portfolioTradeEvents(main, "$10K", t => `main-${t.id || t.slug}`, () => "manual"));
 
-      // 3. Main $10K portfolio trades
-      const main = await redisGet(MAIN_PORTFOLIO_KEY);
-      if (main && Array.isArray(main.trades)) {
-        for (const t of main.trades) {
-          events.push({
-            type: t.status === "closed" ? "trade_closed" : "trade_opened",
-            timestamp: t.closed_at || t.date || main.created,
-            detail: {
-              id: `main-${t.id || t.slug}`, strategy: "manual", slug: t.slug,
-              question: t.question || t.market, side: t.side,
-              entry_price: t.entry_price, exit_price: t.exit_price || null,
-              invested: t.invested, shares: t.shares,
-              pnl: t.pnl || null, pnl_pct: t.pnl_pct || null,
-              close_reason: t.close_reason || null, status: t.status, portfolio: "$10K",
-            },
-          });
-        }
-      }
-
-      // 4. Price history summary
-      const priceHistory = await redisGet(PRICE_HISTORY_KEY);
+      // 3. Price history summary
       if (priceHistory && typeof priceHistory === "object") {
         for (const [slug, points] of Object.entries(priceHistory)) {
           if (Array.isArray(points) && points.length > 0) {
@@ -223,7 +209,11 @@ async function handleHistory(req, res) {
       }
     }
 
-    events.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+    events.sort((a, b) => {
+      const ta = new Date(a.timestamp || 0).getTime();
+      const tb = new Date(b.timestamp || 0).getTime();
+      return tb - ta;
+    });
 
     return res.status(200).json({
       events,

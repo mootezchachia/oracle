@@ -1,3 +1,17 @@
+const STRATEGY_COLORS = {
+  bonds: "#4ade80",
+  expertise: "#60a5fa",
+  flash_crash: "#f59e0b",
+};
+
+const STRATEGY_LABELS = {
+  bonds: "BONDS",
+  expertise: "EXPERTISE",
+  flash_crash: "CRASH",
+};
+
+export { STRATEGY_COLORS, STRATEGY_LABELS };
+
 export default function Strategy100Panel({ data }) {
   if (!data || !data.account) return null;
 
@@ -5,17 +19,8 @@ export default function Strategy100Panel({ data }) {
   const returnColor = (account.total_return || 0) >= 0 ? "text-green" : "text-red";
   const returnPrefix = (account.total_return || 0) >= 0 ? "+" : "";
 
-  const strategyColors = {
-    bonds: "#4ade80",
-    expertise: "#60a5fa",
-    flash_crash: "#f59e0b",
-  };
-
-  const strategyLabels = {
-    bonds: "BONDS",
-    expertise: "EXPERTISE",
-    flash_crash: "CRASH",
-  };
+  const strategyColors = STRATEGY_COLORS;
+  const strategyLabels = STRATEGY_LABELS;
 
   return (
     <div className="bg-bg-1 border border-border rounded-lg overflow-hidden card-hover">
