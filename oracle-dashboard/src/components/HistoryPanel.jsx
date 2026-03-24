@@ -268,7 +268,8 @@ function ScansView({ events }) {
               <th className="px-3 py-1.5 font-medium text-right">MARKETS</th>
               <th className="px-3 py-1.5 font-medium text-right">BONDS</th>
               <th className="px-3 py-1.5 font-medium text-right">EXPERTISE</th>
-              <th className="px-3 py-1.5 font-medium text-right">CRASHES</th>
+              <th className="px-3 py-1.5 font-medium text-right">CRYPTO</th>
+              <th className="px-3 py-1.5 font-medium text-right">VALUE</th>
               <th className="px-3 py-1.5 font-medium text-right">EXECUTED</th>
               <th className="px-3 py-1.5 font-medium text-right">CLOSED</th>
             </tr>
@@ -285,7 +286,8 @@ function ScansView({ events }) {
                   <td className="px-3 py-2 text-right tabular-nums text-text-0">{d.markets_scanned}</td>
                   <td className="px-3 py-2 text-right tabular-nums" style={{ color: "#4ade80" }}>{d.bonds_found}</td>
                   <td className="px-3 py-2 text-right tabular-nums" style={{ color: "#60a5fa" }}>{d.expertise_found}</td>
-                  <td className="px-3 py-2 text-right tabular-nums" style={{ color: "#f59e0b" }}>{d.crashes_found}</td>
+                  <td className="px-3 py-2 text-right tabular-nums" style={{ color: "#e879f9" }}>{d.crypto15m_found ?? d.crashes_found ?? 0}</td>
+                  <td className="px-3 py-2 text-right tabular-nums" style={{ color: "#f59e0b" }}>{d.value_found ?? 0}</td>
                   <td className="px-3 py-2 text-right tabular-nums">
                     {d.executed > 0 ? <span className="text-green font-semibold">{d.executed}</span> : <span className="text-text-2">0</span>}
                   </td>

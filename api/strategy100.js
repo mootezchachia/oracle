@@ -16,11 +16,12 @@ const MAIN_PORTFOLIO_KEY = "oracle:portfolio:main";
 const PRICE_HISTORY_KEY = "oracle:price_history";
 
 const EMPTY_PORTFOLIO = {
-  account: { starting_balance: 100, total_cash: 100 },
+  account: { starting_balance: 1000, total_cash: 1000 },
   allocations: {
-    bonds: { budget: 60, cash: 60, invested: 0 },
-    expertise: { budget: 30, cash: 30, invested: 0 },
-    flash_crash: { budget: 10, cash: 10, invested: 0 },
+    bonds: { budget: 500, cash: 500, invested: 0 },
+    expertise: { budget: 250, cash: 250, invested: 0 },
+    crypto15m: { budget: 150, cash: 150, invested: 0 },
+    value: { budget: 100, cash: 100, invested: 0 },
   },
   trades: [],
   stats: { total_trades: 0, wins: 0, losses: 0, total_pnl: 0 },
@@ -159,11 +160,15 @@ async function handleHistory(req, res) {
               markets_scanned: entry.scanned?.total_markets || 0,
               bonds_found: entry.scanned?.bonds || 0,
               expertise_found: entry.scanned?.expertise || 0,
+              crypto15m_found: entry.scanned?.crypto15m || 0,
+              value_found: entry.scanned?.value || 0,
               crashes_found: entry.scanned?.crashes || 0,
+              full_scan: entry.scanned?.full_scan ?? true,
               executed: entry.executed?.length || 0,
               closed: entry.closed?.length || 0,
               trades: entry.executed || [],
               exits: entry.closed || [],
+              skipped: entry.skipped || [],
             },
           });
 

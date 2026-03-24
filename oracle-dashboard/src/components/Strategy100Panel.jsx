@@ -1,13 +1,15 @@
 const STRATEGY_COLORS = {
   bonds: "#4ade80",
   expertise: "#60a5fa",
-  flash_crash: "#f59e0b",
+  crypto15m: "#e879f9",
+  value: "#f59e0b",
 };
 
 const STRATEGY_LABELS = {
   bonds: "BONDS",
   expertise: "EXPERTISE",
-  flash_crash: "CRASH",
+  crypto15m: "CRYPTO",
+  value: "VALUE",
 };
 
 export { STRATEGY_COLORS, STRATEGY_LABELS };
@@ -27,7 +29,7 @@ export default function Strategy100Panel({ data }) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-bg-2 to-bg-1">
         <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest uppercase text-text-2">
-          <span style={{ color: "#f59e0b" }}>$</span> $100 STRATEGY
+          <span style={{ color: "#f59e0b" }}>$</span> $1K STRATEGY
           <span className="bg-orange/15 text-orange text-[9px] px-2 py-0.5 rounded-full border border-orange/20">
             PAPER
           </span>
@@ -48,7 +50,7 @@ export default function Strategy100Panel({ data }) {
 
       {/* Allocation bars */}
       {allocations && (
-        <div className="grid grid-cols-3 gap-px bg-border text-center text-[9px] font-mono">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border text-center text-[9px] font-mono">
           {Object.entries(allocations).map(([key, alloc]) => {
             const pct = alloc.budget > 0 ? (alloc.invested / alloc.budget) * 100 : 0;
             return (
@@ -141,6 +143,11 @@ export default function Strategy100Panel({ data }) {
                   {pos.current_price != null
                     ? `${(pos.current_price * 100).toFixed(0)}c`
                     : "..."}
+                  {pos.days_to_expiry != null && pos.days_to_expiry < 999 && (
+                    <div className={`text-[8px] ${pos.days_to_expiry <= 7 ? "text-red" : "text-text-2"}`}>
+                      {pos.days_to_expiry}d
+                    </div>
+                  )}
                 </div>
                 <div className="text-[10px] font-mono text-center text-text-0 tabular-nums">
                   ${pos.invested?.toFixed(0)}
