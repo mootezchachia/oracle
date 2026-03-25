@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const ENDPOINTS = ['markets', 'reddit', 'news', 'fred', 'predictions', 'price-history', 'portfolio', 'signals', 'crypto', 'strategy100', 'strategy100?view=history', 'auto-research']
+const ENDPOINTS = ['markets', 'reddit', 'news', 'fred', 'predictions', 'price-history', 'portfolio', 'signals', 'crypto', 'strategy100', 'strategy100?view=history', 'strategy100?view=research']
 
 async function fetchJSON(endpoint) {
   try {
