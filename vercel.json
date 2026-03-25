@@ -7,6 +7,10 @@
     {
       "path": "/api/strategy100-run",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/auto-research",
+      "schedule": "0 */6 * * *"
     }
   ],
   "headers": [

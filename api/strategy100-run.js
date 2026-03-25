@@ -21,6 +21,8 @@ const PORTFOLIO_KEY = "oracle:strategy100:portfolio";
 const LOG_KEY = "oracle:strategy100:log";
 const LAST_FULL_SCAN_KEY = "oracle:strategy100:last_full_scan";
 
+const RESEARCH_PARAMS_KEY = "oracle:research:params";
+
 const SKIP_KW = [
   "nba", "nfl", "nhl", "mlb", "ufc", "mma", "premier league", "champions league",
   "tennis", "golf", "esports", "counter-strike", "dota",
@@ -430,7 +432,10 @@ function findValue(markets, openPositions, skipReasons) {
 function executeTrade(portfolio, strategy, slug, question, side, price, maxSize, extra = {}) {
   const alloc = portfolio.allocations[strategy];
   if (!alloc) return null;
-  const size = Math.min(maxSize, alloc.cash);
+
+  // Use research-optimized position size if available
+  const researchParams = portfolio._researchParams?.[strategy];
+  const size = Math.min(researchParams?.position_size || maxSize, alloc.cash);
   if (size < 3) return null;
 
   // Check for duplicate
@@ -438,14 +443,19 @@ function executeTrade(portfolio, strategy, slug, question, side, price, maxSize,
 
   const shares = Math.round((size / price) * 10000) / 10000;
 
-  // Strategy-specific TP/SL
+  // Strategy-specific TP/SL — use research-optimized values when available
   let take_profit_pct, stop_loss_pct;
-  switch (strategy) {
-    case "bonds":    take_profit_pct = 7;  stop_loss_pct = 5;  break;
-    case "expertise": take_profit_pct = 15; stop_loss_pct = 10; break;
-    case "crypto15m": take_profit_pct = 20; stop_loss_pct = 12; break;
-    case "value":    take_profit_pct = 25; stop_loss_pct = 15; break;
-    default:         take_profit_pct = 15; stop_loss_pct = 10; break;
+  if (researchParams) {
+    take_profit_pct = researchParams.take_profit_pct;
+    stop_loss_pct = researchParams.stop_loss_pct;
+  } else {
+    switch (strategy) {
+      case "bonds":    take_profit_pct = 7;  stop_loss_pct = 5;  break;
+      case "expertise": take_profit_pct = 15; stop_loss_pct = 10; break;
+      case "crypto15m": take_profit_pct = 20; stop_loss_pct = 12; break;
+      case "value":    take_profit_pct = 25; stop_loss_pct = 15; break;
+      default:         take_profit_pct = 15; stop_loss_pct = 10; break;
+    }
   }
 
   const trade = {
@@ -545,9 +555,16 @@ export default async function handler(req, res) {
     }
 
     const portfolio = await loadPortfolio();
+
+    // Load research-optimized parameters (from auto-research experiments)
+    const researchParams = await redisGet(RESEARCH_PARAMS_KEY);
+    if (researchParams) {
+      portfolio._researchParams = researchParams;
+    }
+
     const executed = [];
     const skipReasons = [];
-    const log = { cycle: new Date().toISOString(), executed: [], closed: [], scanned: {}, skipped: [] };
+    const log = { cycle: new Date().toISOString(), executed: [], closed: [], scanned: {}, skipped: [], research_params: !!researchParams };
 
     // Track open positions for diversification checks
     const openPositions = portfolio.trades.filter(t => t.status === "open");
@@ -617,7 +634,8 @@ export default async function handler(req, res) {
     log.skipped = skipReasons.slice(0, 50); // cap logged skips
     log.scanned.full_scan = runFullScan;
 
-    // Save
+    // Save (strip internal research params before persisting)
+    delete portfolio._researchParams;
     await savePortfolio(portfolio);
     await appendLog(log);
 

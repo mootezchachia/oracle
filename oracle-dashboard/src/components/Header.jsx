@@ -6,6 +6,7 @@ const NAV_TABS = [
   { key: "SIGNALS", icon: "△" },
   { key: "PREDICTIONS", icon: "○" },
   { key: "STRATEGY", icon: "⬡" },
+  { key: "RESEARCH", icon: "◉" },
 ];
 
 export default function Header({ status, onScan, activeTab, onTabChange }) {
