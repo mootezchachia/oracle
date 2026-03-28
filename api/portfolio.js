@@ -81,10 +81,17 @@ export default async function handler(req, res) {
 
     const closedTrades = portfolio.trades.filter(t => t.status === "closed").map(t => ({ ...t, live: false }));
     const livePositions = positions.filter((p) => p.live);
-    const total_invested = livePositions.reduce((s, p) => s + p.invested, 0);
-    const positions_value = parseFloat(livePositions.reduce((s, p) => s + p.current_value, 0).toFixed(2));
-    const total_pnl = parseFloat((positions_value - total_invested).toFixed(2));
-    const total_pnl_pct = total_invested > 0 ? parseFloat(((positions_value / total_invested - 1) * 100).toFixed(2)) : 0;
+    const unlivePositions = positions.filter((p) => !p.live);
+
+    // For positions where we can't fetch live prices, use entry_price as fallback
+    // (invested capital is still there, just can't get current quote)
+    const live_value = livePositions.reduce((s, p) => s + p.current_value, 0);
+    const unlive_value = unlivePositions.reduce((s, p) => s + p.invested, 0);
+    const positions_value = parseFloat((live_value + unlive_value).toFixed(2));
+
+    const total_invested = positions.reduce((s, p) => s + p.invested, 0);
+    const total_pnl = parseFloat((live_value - livePositions.reduce((s, p) => s + p.invested, 0)).toFixed(2));
+    const total_pnl_pct = total_invested > 0 ? parseFloat(((total_pnl / total_invested) * 100).toFixed(2)) : 0;
     const account_value = parseFloat((CASH + positions_value).toFixed(2));
 
     return res.status(200).json({
