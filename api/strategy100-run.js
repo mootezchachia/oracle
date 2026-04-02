@@ -528,6 +528,220 @@ async function checkExits(portfolio) {
   return closed;
 }
 
+// ─── Daily Opportunity Scanner (for main portfolio) ──────────
+
+const MAIN_PORTFOLIO_KEY = "oracle:portfolio:main";
+const SCAN_LOG_KEY = "oracle:scanner:log";
+
+const ORACLE_TOPICS = [
+  { keywords: ["iran", "ceasefire", "military action", "regime", "khamenei", "irgc"], category: "geopolitical", label: "Iran" },
+  { keywords: ["ukraine", "russia", "lyman", "donetsk", "crimea", "zelensky", "putin"], category: "geopolitical", label: "Russia-Ukraine" },
+  { keywords: ["china", "taiwan", "blockade", "xi jinping"], category: "geopolitical", label: "China-Taiwan" },
+  { keywords: ["tariff", "trade war", "sanction"], category: "economic", label: "Trade" },
+  { keywords: ["fed", "interest rate", "rate cut", "inflation", "cpi", "recession", "gdp"], category: "economic", label: "Fed/Macro" },
+  { keywords: ["bitcoin", "btc", "ethereum", "eth", "crypto", "microstrategy", "solana"], category: "crypto", label: "Crypto" },
+  { keywords: ["trump", "congress", "election", "executive order", "vance"], category: "political", label: "US Politics" },
+  { keywords: ["ai ", "openai", "anthropic", "google ai", "deepmind", "artificial intelligence"], category: "tech", label: "AI/Tech" },
+  { keywords: ["oil", "crude", "opec", "natural gas", "gold", "commodity"], category: "economic", label: "Commodities" },
+  { keywords: ["nato", "war", "peace", "ceasefire", "missile", "nuclear"], category: "geopolitical", label: "Security" },
+];
+
+function classifyMarket(question) {
+  const q = question.toLowerCase();
+  for (const topic of ORACLE_TOPICS) {
+    if (topic.keywords.some(k => q.includes(k))) {
+      return { category: topic.category, label: topic.label };
+    }
+  }
+  return null;
+}
+
+function scoreOpportunity(pm, classification) {
+  // Score 0-100: how good is this opportunity for ORACLE's main portfolio?
+  let score = 0;
+
+  // Price range: best opportunities are 0.15-0.85 (not near-certain)
+  const yes = pm.yes_price;
+  if (yes >= 0.20 && yes <= 0.80) score += 30;
+  else if (yes >= 0.10 && yes <= 0.90) score += 15;
+  else if (yes >= 0.90 || yes <= 0.10) score += 5; // bonds
+
+  // Volume: higher = more liquid
+  if (pm.volume > 500000) score += 25;
+  else if (pm.volume > 100000) score += 20;
+  else if (pm.volume > 50000) score += 15;
+  else if (pm.volume > 10000) score += 10;
+
+  // Time: prefer 14+ days (avoid expiring today)
+  if (pm.days_to_expiry >= 30) score += 20;
+  else if (pm.days_to_expiry >= 14) score += 15;
+  else if (pm.days_to_expiry >= 7) score += 10;
+  else if (pm.days_to_expiry >= 1) score += 5;
+
+  // Edge from 50/50: bigger deviation = clearer signal
+  const edge = Math.abs(yes - 0.5) * 100;
+  if (edge >= 30) score += 15;
+  else if (edge >= 15) score += 10;
+  else if (edge >= 5) score += 5;
+
+  // Boost ORACLE-domain markets (geopolitical/macro)
+  if (classification) {
+    if (["geopolitical", "economic", "political"].includes(classification.category)) score += 10;
+    if (classification.category === "crypto") score += 5;
+  }
+
+  return Math.min(100, score);
+}
+
+async function runDailyScanner(markets) {
+  const opportunities = [];
+
+  for (const m of markets) {
+    const pm = parseMarket(m);
+    if (pm.yes_price === null || pm.no_price === null) continue;
+
+    const q = pm.question.toLowerCase();
+    if (SKIP_KW.some(k => q.includes(k))) continue;
+
+    const classification = classifyMarket(pm.question);
+    if (!classification) continue; // only ORACLE-relevant markets
+
+    // Skip near-certain (bonds handled by strategy100)
+    if (pm.yes_price > 0.97 || pm.no_price > 0.97) continue;
+    if (pm.volume < 5000) continue;
+
+    const score = scoreOpportunity(pm, classification);
+    if (score < 30) continue;
+
+    // Determine suggested side
+    let side, entry_price, thesis;
+    if (pm.yes_price > 0.5) {
+      // Market leans YES — contrarian says NO, unless bond
+      if (pm.yes_price >= 0.88) {
+        side = "yes"; entry_price = pm.yes_price;
+        thesis = `Bond: ${classification.label} market at ${(pm.yes_price*100).toFixed(0)}c YES. High-prob outcome.`;
+      } else {
+        side = "no"; entry_price = pm.no_price;
+        thesis = `Contrarian: ${classification.label} at ${(pm.yes_price*100).toFixed(0)}c YES — market may overestimate.`;
+      }
+    } else {
+      if (pm.no_price >= 0.88) {
+        side = "no"; entry_price = pm.no_price;
+        thesis = `Bond: ${classification.label} market at ${(pm.no_price*100).toFixed(0)}c NO. High-prob outcome.`;
+      } else {
+        side = "yes"; entry_price = pm.yes_price;
+        thesis = `Contrarian: ${classification.label} at ${(pm.yes_price*100).toFixed(0)}c YES — market may underestimate.`;
+      }
+    }
+
+    opportunities.push({
+      slug: pm.slug,
+      question: pm.question,
+      category: classification.category,
+      label: classification.label,
+      side,
+      entry_price,
+      yes_price: pm.yes_price,
+      no_price: pm.no_price,
+      volume: pm.volume,
+      days_to_expiry: pm.days_to_expiry,
+      score,
+      thesis,
+    });
+  }
+
+  // Sort by score descending
+  opportunities.sort((a, b) => b.score - a.score);
+  return opportunities;
+}
+
+async function handleDailyScan(req, res) {
+  const markets = await fetchAllMarkets();
+  const opportunities = await runDailyScanner(markets);
+
+  // Load main portfolio to check for duplicates
+  const mainPortfolio = await redisGet(MAIN_PORTFOLIO_KEY);
+  const existingSlugs = new Set(
+    (mainPortfolio?.trades || []).filter(t => t.status !== "closed").map(t => t.slug)
+  );
+
+  // Filter out already-held positions
+  const fresh = opportunities.filter(o => !existingSlugs.has(o.slug));
+
+  // Auto-execute top opportunities if ?execute=1
+  const autoExecute = req.query?.execute === "1";
+  const executed = [];
+
+  if (autoExecute && mainPortfolio) {
+    const cash = mainPortfolio.account?.cash || 0;
+    const nextId = Math.max(...mainPortfolio.trades.map(t => t.id), 0) + 1;
+    const maxNewTrades = 3; // max 3 new positions per daily scan
+    const positionSize = 500;
+
+    for (let i = 0; i < Math.min(fresh.length, maxNewTrades); i++) {
+      const opp = fresh[i];
+      if (opp.score < 50) break; // minimum quality threshold
+      if (mainPortfolio.account.cash < positionSize) break;
+
+      const trade = {
+        id: nextId + i,
+        slug: opp.slug,
+        question: opp.question,
+        side: opp.side,
+        entry_price: opp.entry_price,
+        shares: Math.round((positionSize / opp.entry_price) * 100) / 100,
+        invested: positionSize,
+        date: new Date().toISOString().slice(0, 10),
+        status: "open",
+        source: "scanner",
+        thesis: opp.thesis,
+        score: opp.score,
+        category: opp.category,
+      };
+
+      mainPortfolio.trades.push(trade);
+      mainPortfolio.account.cash = Math.round((mainPortfolio.account.cash - positionSize) * 100) / 100;
+      executed.push(trade);
+    }
+
+    if (executed.length > 0) {
+      await redisSet(MAIN_PORTFOLIO_KEY, mainPortfolio);
+    }
+  }
+
+  // Log the scan
+  const scanLog = {
+    timestamp: new Date().toISOString(),
+    markets_scanned: markets.length,
+    opportunities_found: opportunities.length,
+    fresh_opportunities: fresh.length,
+    executed: executed.length,
+    top_10: fresh.slice(0, 10).map(o => ({
+      slug: o.slug,
+      question: o.question.slice(0, 60),
+      side: o.side,
+      price: o.entry_price,
+      score: o.score,
+      label: o.label,
+      thesis: o.thesis,
+    })),
+  };
+
+  const logs = (await redisGet(SCAN_LOG_KEY)) || [];
+  logs.push(scanLog);
+  await redisSet(SCAN_LOG_KEY, logs.slice(-30));
+
+  return res.status(200).json({
+    status: "ok",
+    scanned: markets.length,
+    opportunities: fresh.length,
+    executed: executed.length,
+    executed_trades: executed,
+    top_opportunities: fresh.slice(0, 15),
+    scan_log: scanLog,
+  });
+}
+
 // ─── Main Handler ────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -546,6 +760,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Daily opportunity scanner for main portfolio
+    if (req.query?.action === "scan") {
+      return handleDailyScan(req, res);
+    }
+
     // Reset
     if (req.query?.reset === "1") {
       const p = newPortfolio();
