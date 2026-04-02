@@ -89,8 +89,11 @@ export default async function handler(req, res) {
     const unlive_value = unlivePositions.reduce((s, p) => s + p.invested, 0);
     const positions_value = parseFloat((live_value + unlive_value).toFixed(2));
 
-    const total_invested = positions.reduce((s, p) => s + p.invested, 0);
-    const total_pnl = parseFloat((live_value - livePositions.reduce((s, p) => s + p.invested, 0)).toFixed(2));
+    // P&L must include both unrealized (open) AND realized (closed) trades
+    const unrealized_pnl = live_value - livePositions.reduce((s, p) => s + p.invested, 0);
+    const realized_pnl = closedTrades.reduce((s, t) => s + (t.pnl || 0), 0);
+    const total_pnl = parseFloat((unrealized_pnl + realized_pnl).toFixed(2));
+    const total_invested = positions.reduce((s, p) => s + p.invested, 0) + closedTrades.reduce((s, t) => s + t.invested, 0);
     const total_pnl_pct = total_invested > 0 ? parseFloat(((total_pnl / total_invested) * 100).toFixed(2)) : 0;
     const account_value = parseFloat((CASH + positions_value).toFixed(2));
 
