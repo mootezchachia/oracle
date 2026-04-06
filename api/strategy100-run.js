@@ -1118,10 +1118,220 @@ async function handleForecast(req, res) {
   return res.status(200).json(result);
 }
 
-// ─── AI Brief Storage (written by Claude Code /oracle skill) ─
+// ─── AI Analysis (Qwen 3.6 Plus via OpenRouter — FREE) ──────
 
 const BRIEF_KEY = "oracle:ai:brief";
 const ANALYSIS_KEY = "oracle:ai:analysis";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
+const AI_MODEL = "qwen/qwen3.6-plus:free";
+
+const BASE_URL = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : "https://oracle-psi-orpin.vercel.app";
+
+async function fetchJSON(url, timeout = 12000) {
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(timeout) });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+async function gatherAllData() {
+  const [markets, portfolio, strategy, forecast, news, reddit, signals, fred] =
+    await Promise.all([
+      fetchJSON(`${BASE_URL}/api/markets`),
+      fetchJSON(`${BASE_URL}/api/portfolio`),
+      fetchJSON(`${BASE_URL}/api/strategy100`),
+      fetchJSON(`${BASE_URL}/api/strategy100?view=forecast`),
+      fetchJSON(`${BASE_URL}/api/news`),
+      fetchJSON(`${BASE_URL}/api/reddit`),
+      fetchJSON(`${BASE_URL}/api/signals`),
+      fetchJSON(`${BASE_URL}/api/fred`),
+    ]);
+  return { markets, portfolio, strategy, forecast, news, reddit, signals, fred };
+}
+
+function summarizeData(data) {
+  const parts = [];
+  if (data.portfolio?.account) {
+    const a = data.portfolio.account;
+    parts.push(`MAIN $10K PORTFOLIO: Value $${a.total_value?.toFixed(2)} | PnL $${a.pnl?.toFixed(2)} (${a.pnl_pct?.toFixed(1)}%)`);
+    for (const p of (data.portfolio.positions || []).slice(0, 25))
+      parts.push(`  #${p.id} [${p.status === 'closed' ? 'CLOSED' : 'LIVE'}] ${p.question?.slice(0, 60)} | ${p.side} @ ${p.entry_price} | PnL: $${p.pnl?.toFixed(2) || 'n/a'}`);
+  }
+  if (data.strategy?.account) {
+    const a = data.strategy.account;
+    parts.push(`\nSTRATEGY $1K: Value $${a.total_value?.toFixed(2)} | Return $${a.total_return?.toFixed(2)} (${a.total_return_pct?.toFixed(1)}%)`);
+    for (const p of (data.strategy.positions || []).slice(0, 15))
+      parts.push(`  #${p.id} [${p.strategy}] ${p.question?.slice(0, 50)} | ${p.side} @ ${p.entry_price} | PnL: $${p.pnl?.toFixed(2) || 'n/a'}`);
+  }
+  if (data.forecast?.top_forecasts) {
+    parts.push(`\nFORECASTS (${data.forecast.forecasts_generated} generated, ${data.forecast.with_edge} with edge):`);
+    for (const f of data.forecast.top_forecasts.slice(0, 10)) {
+      const m = f.market || {};
+      parts.push(`  [${f.signal}] ${m.question?.slice(0, 55)} | Mkt:${Math.round((m.yes_price || 0) * 100)}c → Fcst:${Math.round((f.aggregation?.final_probability || 0) * 100)}c | Edge:${f.edge_pct?.toFixed(1)}% | ${m.days_to_expiry}d`);
+    }
+  }
+  if (data.news && Array.isArray(data.news)) {
+    parts.push(`\nNEWS (${data.news.length} articles):`);
+    for (const n of data.news.slice(0, 12))
+      parts.push(`  [${n.source}] ${n.title?.slice(0, 80)}`);
+  }
+  if (data.reddit && Array.isArray(data.reddit) && data.reddit.length > 0 && !data.reddit[0]?.subreddit?.includes('status')) {
+    parts.push(`\nREDDIT (${data.reddit.length} posts):`);
+    for (const p of data.reddit.slice(0, 8))
+      parts.push(`  [${p.score}pts] r/${p.subreddit} — ${p.title?.slice(0, 70)}`);
+  }
+  if (data.fred && Array.isArray(data.fred)) {
+    parts.push(`\nECONOMIC DATA (FRED):`);
+    for (const f of data.fred)
+      parts.push(`  ${f.name}: ${f.value} (${f.date})`);
+  }
+  return parts.join('\n');
+}
+
+async function callOpenRouter(systemPrompt, userPrompt) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set");
+
+  const r = await fetch(OPENROUTER_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": BASE_URL,
+      "X-Title": "ORACLE Superforecaster",
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.3,
+      max_tokens: 4000,
+    }),
+    signal: AbortSignal.timeout(90000),
+  });
+
+  if (!r.ok) throw new Error(`OpenRouter ${r.status}: ${await r.text()}`);
+  const resp = await r.json();
+  return resp.choices?.[0]?.message?.content || "";
+}
+
+const AI_SYSTEM = `You are ORACLE, an elite superforecasting AI for prediction markets.
+Analyze through 4 perspectives: Base Rate, Causal, Adversarial, Crowd.
+Be calibrated: 70% means 70%, not 90%. Think in EDGE (your probability vs market).
+Cite specific news headlines and price levels.`;
+
+function buildAIPrompt(dataSummary) {
+  return `Analyze these prediction market portfolios. Today: ${new Date().toISOString().split('T')[0]}.
+
+${dataSummary}
+
+Respond in EXACTLY this JSON (no markdown fences, no extra text, just JSON):
+{
+  "opportunities": [{"slug":"...","question":"...","market_price":0.23,"ai_probability":0.08,"edge_pct":-15.0,"signal":"BUY NO","thesis":"2-sentence thesis","agents":[{"name":"base_rate","probability":0.05,"confidence":"high","reasoning":"..."},{"name":"causal","probability":0.06,"confidence":"high","reasoning":"..."},{"name":"adversarial","probability":0.15,"confidence":"medium","reasoning":"..."},{"name":"crowd","probability":0.10,"confidence":"medium","reasoning":"..."}]}],
+  "health_checks": [{"question":"...","status":"hold|alert|exit","reason":"1-sentence"}],
+  "key_insights": ["insight 1","insight 2","insight 3"],
+  "market_regime": "1-sentence macro environment"
+}
+
+RULES:
+- Include ALL opportunities with edge > 3%
+- Check EVERY open position against the news
+- Flag positions where thesis weakened or date passed
+- Signal: BUY YES / BUY NO / HOLD`;
+}
+
+async function handleAIAnalyze(req, res) {
+  if (!process.env.OPENROUTER_API_KEY) {
+    return res.status(500).json({ error: "OPENROUTER_API_KEY not configured" });
+  }
+
+  const data = await gatherAllData();
+  if (!data.portfolio && !data.strategy) {
+    return res.status(500).json({ error: "Failed to fetch portfolio data" });
+  }
+
+  const dataSummary = summarizeData(data);
+  const aiResponse = await callOpenRouter(AI_SYSTEM, buildAIPrompt(dataSummary));
+
+  // Parse JSON from AI response
+  let analysis;
+  try {
+    let jsonStr = aiResponse;
+    const fenceMatch = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenceMatch) jsonStr = fenceMatch[1];
+    jsonStr = jsonStr.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    analysis = JSON.parse(jsonStr);
+  } catch (e) {
+    await redisSet(BRIEF_KEY, aiResponse);
+    return res.status(200).json({ status: "partial", message: "AI responded but JSON parse failed", raw: aiResponse.slice(0, 2000), error: e.message });
+  }
+
+  // Build result
+  const result = {
+    timestamp: new Date().toISOString(),
+    ai_powered: true,
+    model: AI_MODEL,
+    markets_analyzed: data.forecast?.forecasts_generated || 0,
+    opportunities: analysis.opportunities || [],
+    health_checks: analysis.health_checks || [],
+    key_insights: analysis.key_insights || [],
+    market_regime: analysis.market_regime || "",
+  };
+
+  // Build brief text
+  const mainVal = data.portfolio?.account?.total_value?.toFixed(0) || "?";
+  const mainPnl = data.portfolio?.account?.pnl?.toFixed(0) || "?";
+  const mainPct = data.portfolio?.account?.pnl_pct?.toFixed(1) || "?";
+  const stratVal = data.strategy?.account?.total_value?.toFixed(0) || "?";
+  const stratRet = data.strategy?.account?.total_return?.toFixed(0) || "?";
+  const stratPct = data.strategy?.account?.total_return_pct?.toFixed(1) || "?";
+
+  let brief = `=== ORACLE INTELLIGENCE BRIEF ===\n`;
+  brief += `Date: ${new Date().toISOString().split('T')[0]} (AI: ${AI_MODEL})\n\n`;
+  brief += `--- PORTFOLIO ---\n`;
+  brief += `$10K: $${mainVal} ($${mainPnl}, ${mainPct}%) — ${data.portfolio?.positions?.filter(p => p.status !== 'closed').length || 0} positions\n`;
+  brief += `$1K:  $${stratVal} ($${stratRet}, ${stratPct}%) — ${data.strategy?.positions?.length || 0} positions\n\n`;
+
+  if (result.opportunities.length > 0) {
+    brief += `--- TOP OPPORTUNITIES ---\n`;
+    for (const opp of result.opportunities.slice(0, 5)) {
+      brief += `[${opp.signal}] ${opp.question}\n`;
+      brief += `   Mkt: ${Math.round((opp.market_price || 0) * 100)}c | AI: ${Math.round((opp.ai_probability || 0) * 100)}c | Edge: ${opp.edge_pct > 0 ? '+' : ''}${opp.edge_pct?.toFixed(1)}%\n`;
+      brief += `   ${opp.thesis}\n\n`;
+    }
+  }
+
+  const alerts = (result.health_checks || []).filter(h => h.status === 'alert' || h.status === 'exit');
+  if (alerts.length > 0) {
+    brief += `--- ALERTS (${alerts.length}) ---\n`;
+    for (const a of alerts) brief += `!! ${a.question?.slice(0, 50)} — ${a.reason}\n`;
+    brief += `\n`;
+  }
+
+  if (result.key_insights?.length > 0) {
+    brief += `--- KEY INSIGHTS ---\n`;
+    for (const ins of result.key_insights) brief += `- ${ins}\n`;
+  }
+
+  if (result.market_regime) brief += `\nRegime: ${result.market_regime}\n`;
+
+  result.brief = brief;
+  await Promise.all([redisSet(ANALYSIS_KEY, result), redisSet(BRIEF_KEY, brief)]);
+
+  return res.status(200).json({
+    status: "ok",
+    model: AI_MODEL,
+    opportunities: result.opportunities.length,
+    alerts: alerts.length,
+    health_checks: result.health_checks.length,
+    brief,
+  });
+}
 
 // ─── Main Handler ────────────────────────────────────────────
 
@@ -1141,7 +1351,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Read cached AI brief (written by Claude Code /oracle skill)
+    // AI-powered analysis via Qwen 3.6 Plus (free)
+    if (req.query?.action === "ai-analyze") {
+      return handleAIAnalyze(req, res);
+    }
+
+    // Read cached AI brief
     if (req.query?.action === "ai-brief") {
       const analysis = await redisGet(ANALYSIS_KEY);
       const brief = await redisGet(BRIEF_KEY);
