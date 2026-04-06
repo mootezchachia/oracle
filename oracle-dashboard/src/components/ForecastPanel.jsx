@@ -165,7 +165,108 @@ function ForecastRow({ item, rank }) {
   );
 }
 
-export default function ForecastPanel({ data }) {
+function AIBriefCard({ aiBrief }) {
+  const [expanded, setExpanded] = useState(false);
+  const analysis = aiBrief?.analysis;
+  const brief = aiBrief?.brief;
+
+  if (!analysis && !brief) return null;
+
+  const opportunities = analysis?.opportunities || [];
+  const healthAlerts = (analysis?.health_checks || []).filter(h => h.status === "alert" || h.status === "exit");
+
+  return (
+    <div className="bg-bg-1 border border-border rounded-lg overflow-hidden">
+      <div
+        className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-purple-500/5 to-bg-1 cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-2 text-[10px] font-semibold tracking-widest uppercase text-text-2">
+          <span className="text-purple-400">&#9733;</span> AI INTELLIGENCE BRIEF
+          <span className="bg-purple-500/15 text-purple-400 text-[9px] px-2 py-0.5 rounded-full">
+            {analysis?.ai_powered ? "CLAUDE" : "ALGO"}
+          </span>
+          {opportunities.length > 0 && (
+            <span className="bg-green/15 text-green text-[9px] px-2 py-0.5 rounded-full">
+              {opportunities.length} SIGNAL{opportunities.length !== 1 ? "S" : ""}
+            </span>
+          )}
+          {healthAlerts.length > 0 && (
+            <span className="bg-red/15 text-red text-[9px] px-2 py-0.5 rounded-full">
+              {healthAlerts.length} ALERT{healthAlerts.length !== 1 ? "S" : ""}
+            </span>
+          )}
+        </div>
+        <div className="text-[9px] text-text-2 font-mono">
+          {analysis?.timestamp ? new Date(analysis.timestamp).toLocaleString() : ""}
+          <span className="ml-2">{expanded ? "▲" : "▼"}</span>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="p-4 space-y-3 animate-fade-in">
+          {/* AI Opportunities */}
+          {opportunities.length > 0 && (
+            <div>
+              <div className="text-[9px] font-bold tracking-wider text-purple-400 mb-2">AI OPPORTUNITIES</div>
+              {opportunities.map((o, i) => (
+                <div key={o.slug || i} className="bg-bg-2/50 rounded p-2.5 mb-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-mono text-text-0 truncate flex-1">{o.question}</span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${o.signal?.includes("YES") ? "bg-green/10 text-green" : "bg-red/10 text-red"}`}>
+                      {o.signal}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-[8px] text-text-2">
+                    <span>Market: {Math.round(o.market_price * 100)}c</span>
+                    <span className="text-purple-400">AI: {Math.round(o.ai_probability * 100)}c</span>
+                    <span className={o.edge_pct > 0 ? "text-green" : "text-red"}>
+                      Edge: {o.edge_pct > 0 ? "+" : ""}{o.edge_pct}%
+                    </span>
+                  </div>
+                  {/* Agent reasoning */}
+                  <div className="grid grid-cols-2 gap-1 mt-1.5">
+                    {(o.agents || []).map(a => (
+                      <div key={a.name} className="text-[8px] text-text-2 truncate">
+                        <span className="text-text-1 font-semibold">{a.name}:</span> {a.reasoning || ""}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Health alerts */}
+          {healthAlerts.length > 0 && (
+            <div>
+              <div className="text-[9px] font-bold tracking-wider text-red mb-2">POSITION ALERTS</div>
+              {healthAlerts.map((a, i) => (
+                <div key={i} className="bg-red/5 border border-red/20 rounded p-2 mb-1 text-[10px]">
+                  <span className="text-red font-bold">{a.status.toUpperCase()}</span>
+                  <span className="text-text-1 ml-2">{a.slug}</span>
+                  <span className="text-text-2 ml-2">— {a.reason}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Raw brief */}
+          {brief && (
+            <details className="text-[9px]">
+              <summary className="text-text-2 cursor-pointer hover:text-text-1">Raw Intelligence Brief</summary>
+              <pre className="mt-2 p-3 bg-bg-2/50 rounded text-text-2 font-mono whitespace-pre-wrap leading-relaxed overflow-x-auto">
+                {typeof brief === "string" ? brief : JSON.stringify(brief, null, 2)}
+              </pre>
+            </details>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function ForecastPanel({ data, aiBrief }) {
   const [filter, setFilter] = useState("all");
 
   if (!data || !data.top_forecasts || data.top_forecasts.length === 0) {
@@ -190,6 +291,9 @@ export default function ForecastPanel({ data }) {
 
   return (
     <div className="space-y-3">
+      {/* AI Intelligence Brief */}
+      <AIBriefCard aiBrief={aiBrief} />
+
       {/* Summary header */}
       <div className="bg-bg-1 border border-border rounded-lg overflow-hidden">
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-gradient-to-r from-bg-2 to-bg-1">

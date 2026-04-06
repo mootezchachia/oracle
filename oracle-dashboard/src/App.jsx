@@ -19,7 +19,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('DASHBOARD')
   const {
     markets, reddit, news, fred, predictions, priceHistory,
-    portfolio, signals, strategy100, history, research, forecast, status, loading, refresh
+    portfolio, signals, strategy100, history, research, forecast, aiBrief, status, loading, refresh
   } = useOracleData(60000)
 
   const activePreds = predictions.filter(p => p.market)
@@ -192,7 +192,7 @@ export default function App() {
         {/* ─── FORECAST TAB ─── */}
         {activeTab === 'FORECAST' && (
           <div key="forecast" className="tab-content">
-            <ForecastPanel data={forecast} />
+            <ForecastPanel data={forecast} aiBrief={aiBrief} />
           </div>
         )}
 
