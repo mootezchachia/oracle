@@ -1,23 +1,11 @@
 import { useState } from "react";
 
 const AGENT_COLORS = {
-  base_rate: { bg: "bg-blue-500/10", text: "text-blue-400", label: "BASE RATE" },
-  causal: { bg: "bg-emerald-500/10", text: "text-emerald-400", label: "CAUSAL" },
-  adversarial: { bg: "bg-red-500/10", text: "text-red-400", label: "ADVERSARIAL" },
-  crowd: { bg: "bg-amber-500/10", text: "text-amber-400", label: "CROWD" },
+  base_rate: { bg: "bg-blue-500/10", text: "text-blue-400", bar: "bg-blue-400", label: "BASE RATE" },
+  causal: { bg: "bg-emerald-500/10", text: "text-emerald-400", bar: "bg-emerald-400", label: "CAUSAL" },
+  adversarial: { bg: "bg-red-500/10", text: "text-red-400", bar: "bg-red-400", label: "ADVERSARIAL" },
+  crowd: { bg: "bg-amber-500/10", text: "text-amber-400", bar: "bg-amber-400", label: "CROWD" },
 };
-
-function AgentDot({ agent, prob }) {
-  const colors = AGENT_COLORS[agent] || { bg: "bg-gray-500/10", text: "text-gray-400" };
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[8px] font-bold ${colors.bg} ${colors.text}`}
-      title={`${colors.label}: ${(prob * 100).toFixed(0)}c`}
-    >
-      {(prob * 100).toFixed(0)}c
-    </span>
-  );
-}
 
 function SignalBadge({ signal }) {
   if (!signal || signal === "HOLD") return <span className="text-text-2 text-[9px]">HOLD</span>;
@@ -29,106 +17,147 @@ function SignalBadge({ signal }) {
   );
 }
 
-function ForecastRow({ forecast, rank }) {
+function ForecastRow({ item, rank }) {
   const [expanded, setExpanded] = useState(false);
-  const f = forecast.forecast || {};
-  const edgeColor = f.edge_pct > 0 ? "text-green" : f.edge_pct < 0 ? "text-red" : "text-text-2";
-  const confColor = f.confidence >= 60 ? "text-green" : f.confidence >= 40 ? "text-amber-400" : "text-text-2";
+
+  // Data lives at: item.market.*, item.agents[], item.aggregation.*, item.edge_pct, item.signal, etc.
+  const m = item.market || {};
+  const agg = item.aggregation || {};
+  const agents = item.agents || [];
+  const cls = item.classification || {};
+
+  const yesPrice = m.yes_price ?? 0;
+  const finalProb = agg.final_probability ?? 0;
+  const edgePct = item.edge_pct ?? 0;
+  const confidence = agg.ensemble_confidence ?? 0;
+  const velocity = item.repricing_velocity ?? 0;
+
+  const edgeColor = edgePct > 2 ? "text-green" : edgePct < -2 ? "text-red" : "text-text-2";
+  const confColor = confidence >= 60 ? "text-green" : confidence >= 40 ? "text-amber-400" : "text-text-2";
 
   return (
     <div className="border-b border-border hover:bg-bg-2/50 transition-colors">
       <div
-        className="grid grid-cols-[24px_1fr_60px_70px_70px_55px_60px] items-center px-3 py-2.5 cursor-pointer"
+        className="grid grid-cols-[28px_1fr_55px_65px_65px_50px_55px] items-center px-3 py-2.5 cursor-pointer gap-1"
         onClick={() => setExpanded(!expanded)}
       >
         <span className="text-[9px] text-text-2 font-mono">#{rank}</span>
         <div className="min-w-0">
-          <div className="text-[11px] font-mono text-text-0 truncate">{forecast.question}</div>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-[8px] text-text-2 uppercase">{forecast.label}</span>
-            <SignalBadge signal={f.signal} />
-            {forecast.days_to_expiry < 999 && (
-              <span className="text-[8px] text-text-2">{forecast.days_to_expiry}d</span>
+          <div className="text-[11px] font-mono text-text-0 truncate">{m.question || "?"}</div>
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            {cls.label && <span className="text-[8px] text-text-2 uppercase bg-bg-3 px-1 py-0.5 rounded">{cls.label}</span>}
+            <SignalBadge signal={item.signal} />
+            {m.days_to_expiry != null && m.days_to_expiry < 999 && (
+              <span className="text-[8px] text-text-2">{m.days_to_expiry}d</span>
             )}
           </div>
         </div>
         <div className="text-[10px] font-mono text-text-1 text-center tabular-nums">
-          {(forecast.yes_price * 100).toFixed(0)}c
+          {(yesPrice * 100).toFixed(0)}c
         </div>
-        <div className="text-[10px] font-mono text-center tabular-nums text-gold">
-          {f.final_probability ? `${(f.final_probability * 100).toFixed(0)}c` : "—"}
+        <div className="text-[10px] font-mono text-center tabular-nums text-gold font-semibold">
+          {(finalProb * 100).toFixed(0)}c
         </div>
         <div className={`text-[10px] font-mono font-semibold text-center tabular-nums ${edgeColor}`}>
-          {f.edge_pct != null ? `${f.edge_pct > 0 ? "+" : ""}${f.edge_pct.toFixed(1)}%` : "—"}
+          {edgePct > 0 ? "+" : ""}{edgePct.toFixed(1)}%
         </div>
         <div className={`text-[10px] font-mono text-center tabular-nums ${confColor}`}>
-          {f.confidence != null ? `${f.confidence}%` : "—"}
+          {confidence}%
         </div>
         <div className="text-[10px] font-mono text-text-2 text-center tabular-nums">
-          {f.repricing_velocity != null ? f.repricing_velocity.toFixed(1) : "—"}
+          {velocity.toFixed(1)}
         </div>
       </div>
 
       {expanded && (
-        <div className="px-4 pb-3 space-y-2 animate-fade-in">
-          {/* Agent breakdown */}
-          <div className="grid grid-cols-4 gap-2">
-            {(f.agents || []).map((a) => {
+        <div className="px-4 pb-3 space-y-3 animate-fade-in">
+          {/* Agent breakdown cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {agents.map((a) => {
               const colors = AGENT_COLORS[a.agent] || { bg: "bg-gray-500/10", text: "text-gray-400", label: a.agent };
               return (
-                <div key={a.agent} className={`rounded p-2 ${colors.bg}`}>
+                <div key={a.agent} className={`rounded-lg p-2.5 ${colors.bg} border border-transparent hover:border-white/5 transition-colors`}>
                   <div className={`text-[8px] font-bold tracking-wider ${colors.text}`}>{colors.label}</div>
-                  <div className={`text-[14px] font-mono font-bold mt-0.5 ${colors.text}`}>
-                    {(a.prob * 100).toFixed(1)}c
+                  <div className={`text-[16px] font-mono font-bold mt-1 ${colors.text}`}>
+                    {(a.probability * 100).toFixed(1)}c
                   </div>
-                  <div className="text-[8px] text-text-2 mt-0.5">
-                    conf: {(a.conf * 100).toFixed(0)}%
+                  <div className="text-[8px] text-text-2 mt-1">
+                    confidence: {(a.confidence * 100).toFixed(0)}%
                   </div>
+                  {a.reasoning && (
+                    <div className="text-[8px] text-text-2/70 mt-1 leading-relaxed line-clamp-2">
+                      {a.reasoning}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
 
-          {/* Thesis */}
-          {forecast.thesis && (
-            <div className="text-[10px] text-text-2 leading-relaxed bg-bg-2/50 rounded p-2">
-              {forecast.thesis}
+          {/* Visual probability bar */}
+          <div>
+            <div className="flex items-center justify-between text-[8px] text-text-2 mb-1">
+              <span>0c (NO)</span>
+              <span>
+                Market: <span className="text-text-1">{(yesPrice * 100).toFixed(0)}c</span>
+                {" | "}
+                Forecast: <span className="text-gold">{(finalProb * 100).toFixed(0)}c</span>
+                {" | "}
+                Edge: <span className={edgeColor}>{edgePct > 0 ? "+" : ""}{edgePct.toFixed(1)}%</span>
+              </span>
+              <span>100c (YES)</span>
             </div>
-          )}
-
-          {/* Probability bar */}
-          <div className="relative h-2 bg-bg-3 rounded-full overflow-hidden">
-            {/* Market price marker */}
-            <div
-              className="absolute top-0 h-full w-0.5 bg-text-2 z-10"
-              style={{ left: `${forecast.yes_price * 100}%` }}
-              title={`Market: ${(forecast.yes_price * 100).toFixed(0)}c`}
-            />
-            {/* Agent forecasts */}
-            {(f.agents || []).map((a) => {
-              const colors = AGENT_COLORS[a.agent];
-              return (
-                <div
-                  key={a.agent}
-                  className={`absolute top-0 h-full w-1 rounded-full ${colors?.text?.replace("text-", "bg-")} opacity-70`}
-                  style={{ left: `${a.prob * 100}%` }}
-                  title={`${colors?.label}: ${(a.prob * 100).toFixed(0)}c`}
-                />
-              );
-            })}
-            {/* Final forecast */}
-            {f.final_probability && (
+            <div className="relative h-3 bg-bg-3 rounded-full overflow-visible">
+              {/* Agent markers */}
+              {agents.map((a) => {
+                const colors = AGENT_COLORS[a.agent] || {};
+                const pos = a.probability * 100;
+                return (
+                  <div
+                    key={a.agent}
+                    className={`absolute top-0 h-3 w-1 rounded-full ${colors.bar || "bg-gray-400"} opacity-60`}
+                    style={{ left: `${Math.min(99, Math.max(1, pos))}%`, transform: "translateX(-50%)" }}
+                    title={`${colors.label}: ${pos.toFixed(0)}c`}
+                  />
+                );
+              })}
+              {/* Market price */}
               <div
-                className="absolute top-0 h-full w-1.5 bg-gold rounded-full z-20"
-                style={{ left: `${f.final_probability * 100}%` }}
-                title={`Forecast: ${(f.final_probability * 100).toFixed(0)}c`}
+                className="absolute top-[-2px] h-[calc(100%+4px)] w-0.5 bg-text-2"
+                style={{ left: `${Math.min(99, Math.max(1, yesPrice * 100))}%`, transform: "translateX(-50%)" }}
+                title={`Market: ${(yesPrice * 100).toFixed(0)}c`}
               />
-            )}
+              {/* Final forecast (gold diamond) */}
+              <div
+                className="absolute top-[-2px] h-[calc(100%+4px)] w-1.5 bg-gold rounded-full z-10"
+                style={{ left: `${Math.min(99, Math.max(1, finalProb * 100))}%`, transform: "translateX(-50%)" }}
+                title={`Forecast: ${(finalProb * 100).toFixed(0)}c`}
+              />
+            </div>
           </div>
-          <div className="flex justify-between text-[8px] text-text-2">
-            <span>0c</span>
-            <span>Market: {(forecast.yes_price * 100).toFixed(0)}c | Forecast: {f.final_probability ? (f.final_probability * 100).toFixed(0) + "c" : "—"}</span>
-            <span>100c</span>
+
+          {/* Aggregation details */}
+          <div className="grid grid-cols-3 gap-2 text-[9px] font-mono">
+            <div className="bg-bg-2/50 rounded p-2">
+              <div className="text-text-2">GEO MEAN</div>
+              <div className="text-text-0 font-semibold">{((agg.raw_geo_mean || 0) * 100).toFixed(1)}c</div>
+            </div>
+            <div className="bg-bg-2/50 rounded p-2">
+              <div className="text-text-2">EXTREMIZED</div>
+              <div className="text-gold font-semibold">{((agg.extremized || 0) * 100).toFixed(1)}c</div>
+            </div>
+            <div className="bg-bg-2/50 rounded p-2">
+              <div className="text-text-2">AGENT SPREAD</div>
+              <div className="text-text-0 font-semibold">{((agg.agent_spread || 0) * 100).toFixed(1)}c</div>
+            </div>
+          </div>
+
+          {/* Market metadata */}
+          <div className="flex items-center gap-3 text-[8px] text-text-2">
+            <span>Vol: ${(m.volume / 1000).toFixed(0)}K</span>
+            <span>Category: {m.category}</span>
+            {m.days_to_expiry < 999 && <span>Expires: {m.days_to_expiry}d</span>}
+            <span>Repricing: {velocity.toFixed(2)}/yr</span>
           </div>
         </div>
       )}
@@ -139,20 +168,21 @@ function ForecastRow({ forecast, rank }) {
 export default function ForecastPanel({ data }) {
   const [filter, setFilter] = useState("all");
 
-  if (!data || !data.top_forecasts) {
+  if (!data || !data.top_forecasts || data.top_forecasts.length === 0) {
     return (
       <div className="bg-bg-1 border border-border rounded-lg p-8 text-center">
-        <div className="text-text-2 text-sm">Loading forecasts... Run a forecast scan first.</div>
+        <div className="text-text-2 text-sm">No forecast data yet.</div>
         <div className="text-[10px] text-text-2 mt-2">
-          Trigger via: <code className="bg-bg-3 px-1 rounded">/api/strategy100-run?action=forecast</code>
+          The superforecasting engine runs with each scan cycle,
+          or trigger manually via <code className="bg-bg-3 px-1 rounded text-text-1">/api/strategy100-run?action=forecast</code>
         </div>
       </div>
     );
   }
 
-  const forecasts = data.top_forecasts || [];
-  const withEdge = forecasts.filter(f => f.forecast?.signal !== "HOLD");
-  const holds = forecasts.filter(f => f.forecast?.signal === "HOLD");
+  const forecasts = data.top_forecasts;
+  const withEdge = forecasts.filter(f => f.signal && f.signal !== "HOLD");
+  const holds = forecasts.filter(f => !f.signal || f.signal === "HOLD");
 
   const filtered = filter === "all" ? forecasts
     : filter === "edge" ? withEdge
@@ -169,30 +199,30 @@ export default function ForecastPanel({ data }) {
               4 AGENTS
             </span>
           </div>
-          <div className="text-[9px] text-text-2">
+          <div className="text-[9px] text-text-2 font-mono">
             {data.timestamp ? new Date(data.timestamp).toLocaleString() : ""}
           </div>
         </div>
 
         {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-border text-center text-[9px] font-mono">
-          <div className="bg-bg-1 py-2.5">
+          <div className="bg-bg-1 py-2.5 hover:bg-bg-2/50 transition-colors">
             <div className="text-text-2">ANALYZED</div>
             <div className="text-text-0 font-semibold">{data.markets_analyzed || 0}</div>
           </div>
-          <div className="bg-bg-1 py-2.5">
+          <div className="bg-bg-1 py-2.5 hover:bg-bg-2/50 transition-colors">
             <div className="text-text-2">FORECASTS</div>
             <div className="text-text-0 font-semibold">{data.forecasts_generated || 0}</div>
           </div>
-          <div className="bg-bg-1 py-2.5">
+          <div className="bg-bg-1 py-2.5 hover:bg-bg-2/50 transition-colors">
             <div className="text-text-2">WITH EDGE</div>
             <div className="text-green font-semibold">{data.with_edge || 0}</div>
           </div>
-          <div className="bg-bg-1 py-2.5">
+          <div className="bg-bg-1 py-2.5 hover:bg-bg-2/50 transition-colors">
             <div className="text-text-2">AGGREGATION</div>
             <div className="text-gold font-semibold">GEO MEAN</div>
           </div>
-          <div className="bg-bg-1 py-2.5">
+          <div className="bg-bg-1 py-2.5 hover:bg-bg-2/50 transition-colors">
             <div className="text-text-2">CALIBRATION</div>
             <div className="text-gold font-semibold">LOGIT x1.5</div>
           </div>
@@ -200,13 +230,17 @@ export default function ForecastPanel({ data }) {
       </div>
 
       {/* Agent legend */}
-      <div className="flex items-center gap-3 px-1">
+      <div className="flex flex-wrap items-center gap-2 px-1">
         {Object.entries(AGENT_COLORS).map(([key, { bg, text, label }]) => (
           <div key={key} className={`flex items-center gap-1.5 px-2 py-1 rounded ${bg}`}>
             <div className={`w-2 h-2 rounded-full ${text.replace("text-", "bg-")}`} />
             <span className={`text-[8px] font-bold tracking-wider ${text}`}>{label}</span>
           </div>
         ))}
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-gold/10">
+          <div className="w-2 h-2 rounded-full bg-gold" />
+          <span className="text-[8px] font-bold tracking-wider text-gold">ENSEMBLE</span>
+        </div>
       </div>
 
       {/* Filter tabs */}
@@ -232,21 +266,20 @@ export default function ForecastPanel({ data }) {
 
       {/* Forecasts table */}
       <div className="bg-bg-1 border border-border rounded-lg overflow-hidden">
-        {/* Table header */}
-        <div className="grid grid-cols-[24px_1fr_60px_70px_70px_55px_60px] items-center px-3 py-2 border-b border-border bg-bg-2/50 text-[8px] font-mono text-text-2 tracking-wider uppercase">
+        <div className="grid grid-cols-[28px_1fr_55px_65px_65px_50px_55px] items-center px-3 py-2 border-b border-border bg-bg-2/50 text-[8px] font-mono text-text-2 tracking-wider uppercase gap-1">
           <span>#</span>
           <span>MARKET</span>
           <span className="text-center">PRICE</span>
           <span className="text-center">FORECAST</span>
           <span className="text-center">EDGE</span>
           <span className="text-center">CONF</span>
-          <span className="text-center">VELOCITY</span>
+          <span className="text-center">VEL</span>
         </div>
 
         <div className="max-h-[600px] overflow-y-auto">
           {filtered.length > 0 ? (
             filtered.map((f, i) => (
-              <ForecastRow key={f.slug || i} forecast={f} rank={i + 1} />
+              <ForecastRow key={f.market?.slug || i} item={f} rank={i + 1} />
             ))
           ) : (
             <div className="p-6 text-center text-[10px] text-text-2">
@@ -259,12 +292,12 @@ export default function ForecastPanel({ data }) {
       {/* Methodology card */}
       {data.methodology && (
         <div className="bg-bg-1 border border-border rounded-lg p-4">
-          <div className="text-[9px] font-semibold tracking-widest uppercase text-text-2 mb-2">METHODOLOGY</div>
-          <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+          <div className="text-[9px] font-semibold tracking-widest uppercase text-text-2 mb-3">METHODOLOGY</div>
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-[10px] font-mono">
             {Object.entries(data.methodology).map(([key, val]) => (
-              <div key={key} className="flex justify-between">
+              <div key={key} className="flex justify-between items-center py-0.5 border-b border-border/30">
                 <span className="text-text-2">{key.replace(/_/g, " ").toUpperCase()}</span>
-                <span className="text-text-1">{val}</span>
+                <span className="text-text-1 font-semibold">{val}</span>
               </div>
             ))}
           </div>
