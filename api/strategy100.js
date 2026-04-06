@@ -100,10 +100,10 @@ const PARAM_RANGES = {
 const EMPTY_PORTFOLIO = {
   account: { starting_balance: 1000, total_cash: 1000 },
   allocations: {
-    bonds: { budget: 500, cash: 500, invested: 0 },
-    expertise: { budget: 250, cash: 250, invested: 0 },
-    crypto15m: { budget: 150, cash: 150, invested: 0 },
-    value: { budget: 100, cash: 100, invested: 0 },
+    bonds: { budget: 550, cash: 550, invested: 0 },
+    expertise: { budget: 300, cash: 300, invested: 0 },
+    crypto15m: { budget: 0, cash: 0, invested: 0 },
+    value: { budget: 150, cash: 150, invested: 0 },
   },
   trades: [],
   stats: { total_trades: 0, wins: 0, losses: 0, total_pnl: 0 },

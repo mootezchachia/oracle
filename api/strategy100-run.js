@@ -4,13 +4,16 @@
  * GET  /api/strategy100-run         — run full scan + auto-execute
  * GET  /api/strategy100-run?reset=1 — reset portfolio to $1,000
  *
- * 4 Strategies:
- *   1. Bonds    ($500) — High-probability outcomes at 93c+, TP 7% / SL 5%
- *   2. Expertise ($250) — Sentiment-driven contrarian on political/macro markets
- *   3. Crypto15m ($150) — 15-minute crypto up/down markets with momentum signals
- *   4. Value    ($100) — Mean reversion on recent price drops, spread arbitrage
+ * 3 Active Strategies + Multi-Agent Superforecasting:
+ *   1. Bonds     ($550) — High-probability outcomes at 93c+, TP 7% / SL 5%
+ *   2. Expertise ($300) — Sentiment-driven contrarian, forecast-validated
+ *   3. Value     ($150) — Mean reversion + spread arbitrage, forecast-validated
+ *   4. Crypto15m ($0)   — DISABLED (lost $101, binary SL failure)
  *
- * Triggered by Vercel Cron (every 15 min) or manual GET.
+ * Superforecasting Engine: 4 agents (Base Rate, Causal, Adversarial, Crowd)
+ * aggregate via geometric mean + logit extremizing. Validates trades before entry.
+ *
+ * Triggered by Vercel Cron (daily) + QStash or manual GET.
  * Stores portfolio state in Upstash Redis.
  */
 
@@ -45,10 +48,10 @@ function newPortfolio() {
   return {
     account: { starting_balance: 1000, total_cash: 1000 },
     allocations: {
-      bonds: { budget: 500, cash: 500, invested: 0 },
-      expertise: { budget: 250, cash: 250, invested: 0 },
-      crypto15m: { budget: 150, cash: 150, invested: 0 },
-      value: { budget: 100, cash: 100, invested: 0 },
+      bonds: { budget: 550, cash: 550, invested: 0 },
+      expertise: { budget: 300, cash: 300, invested: 0 },
+      crypto15m: { budget: 0, cash: 0, invested: 0 },
+      value: { budget: 150, cash: 150, invested: 0 },
     },
     trades: [],
     stats: { total_trades: 0, wins: 0, losses: 0, total_pnl: 0, best_trade: 0, worst_trade: 0 },
@@ -67,24 +70,37 @@ async function loadPortfolio() {
     saved.account.starting_balance = 1000;
     saved.account.total_cash += extra;
 
-    // Set up new allocations preserving existing positions
     const oldBonds = saved.allocations.bonds || { budget: 60, cash: 60, invested: 0 };
     const oldExpertise = saved.allocations.expertise || { budget: 30, cash: 30, invested: 0 };
     const oldFlash = saved.allocations.flash_crash || { budget: 10, cash: 10, invested: 0 };
 
     saved.allocations = {
-      bonds: { budget: 500, cash: oldBonds.cash + (500 - oldBonds.budget), invested: oldBonds.invested },
-      expertise: { budget: 250, cash: oldExpertise.cash + (250 - oldExpertise.budget), invested: oldExpertise.invested },
-      crypto15m: { budget: 150, cash: 150, invested: 0 },
-      value: { budget: 100, cash: oldFlash.cash + (100 - oldFlash.budget), invested: oldFlash.invested },
+      bonds: { budget: 550, cash: oldBonds.cash + (550 - oldBonds.budget), invested: oldBonds.invested },
+      expertise: { budget: 300, cash: oldExpertise.cash + (300 - oldExpertise.budget), invested: oldExpertise.invested },
+      crypto15m: { budget: 0, cash: 0, invested: 0 },
+      value: { budget: 150, cash: oldFlash.cash + (150 - oldFlash.budget), invested: oldFlash.invested },
     };
 
-    // Migrate flash_crash trades to value strategy
     for (const t of saved.trades) {
       if (t.strategy === "flash_crash") t.strategy = "value";
     }
-
     delete saved.allocations.flash_crash;
+  }
+
+  // Migrate crypto15m budget to bonds/expertise/value (crypto15m disabled due to losses)
+  if (saved.allocations.crypto15m && saved.allocations.crypto15m.budget > 0) {
+    const cryptoCash = saved.allocations.crypto15m.cash || 0;
+    saved.allocations.crypto15m.budget = 0;
+    saved.allocations.crypto15m.cash = 0;
+    // Distribute remaining crypto cash: 50% bonds, 30% expertise, 20% value
+    if (cryptoCash > 0) {
+      saved.allocations.bonds.cash = Math.round((saved.allocations.bonds.cash + cryptoCash * 0.5) * 100) / 100;
+      saved.allocations.bonds.budget += Math.round(cryptoCash * 0.5 * 100) / 100;
+      saved.allocations.expertise.cash = Math.round((saved.allocations.expertise.cash + cryptoCash * 0.3) * 100) / 100;
+      saved.allocations.expertise.budget += Math.round(cryptoCash * 0.3 * 100) / 100;
+      saved.allocations.value.cash = Math.round((saved.allocations.value.cash + cryptoCash * 0.2) * 100) / 100;
+      saved.allocations.value.budget += Math.round(cryptoCash * 0.2 * 100) / 100;
+    }
   }
 
   return saved;
@@ -1176,40 +1192,102 @@ export default async function handler(req, res) {
       }
     }
 
-    // ── Strategy 2: Expertise (max 3 positions, $50 each) ──
+    // ── Strategy 2: Expertise (max 4 positions, $60 each) ──
     if (runFullScan) {
       const expertise = findExpertise(markets, openPositions, skipReasons);
       log.scanned.expertise = expertise.length;
-      for (const e of expertise.slice(0, 3)) {
-        const trade = executeTrade(portfolio, "expertise", e.slug, e.question, e.trade_side, e.entry_price, 50,
+
+      // Use multi-agent forecast to validate expertise trades
+      for (const e of expertise.slice(0, 4)) {
+        const pm = { ...e }; // already parsed
+        const forecast = forecastMarket(pm);
+        // Only enter if forecast doesn't strongly disagree
+        if (forecast.signal !== "HOLD" && forecast.aggregation.ensemble_confidence >= 50) {
+          const forecastAgrees = (e.trade_side === "yes" && forecast.edge > 0) || (e.trade_side === "no" && forecast.edge < 0);
+          if (!forecastAgrees) {
+            skipReasons.push({ strategy: "expertise", slug: e.slug, reason: `Forecast disagrees: agents say ${forecast.signal} (conf ${forecast.aggregation.ensemble_confidence}%)` });
+            continue;
+          }
+        }
+        const trade = executeTrade(portfolio, "expertise", e.slug, e.question, e.trade_side, e.entry_price, 60,
           { category: e.category, days_to_expiry: e.days_to_expiry });
-        if (trade) { executed.push(trade); log.executed.push({ id: trade.id, strategy: "expertise", slug: e.slug }); }
+        if (trade) { executed.push(trade); log.executed.push({ id: trade.id, strategy: "expertise", slug: e.slug, forecast_edge: forecast.edge_pct }); }
       }
     }
 
-    // ── Strategy 3: Crypto 15m (max 2 positions, $30 each) ── always runs
-    const crypto15m = await findCrypto15m(markets, openPositions, skipReasons);
-    log.scanned.crypto15m = crypto15m.length;
-    for (const c of crypto15m.slice(0, 2)) {
-      const trade = executeTrade(portfolio, "crypto15m", c.slug, c.question, c.trade_side, c.entry_price, 30,
-        { category: "crypto", days_to_expiry: 0 });
-      if (trade) { executed.push(trade); log.executed.push({ id: trade.id, strategy: "crypto15m", slug: c.slug, signal: c.signal, momentum: c.momentum_1h }); }
-    }
+    // ── Strategy 3: Crypto 15m — DISABLED (lost $101 on 9 trades, SL doesn't work on binary 15m markets)
+    log.scanned.crypto15m = 0;
+    skipReasons.push({ strategy: "crypto15m", slug: "all", reason: "Strategy disabled: -$101 lifetime loss, binary market SL failure" });
 
-    // ── Strategy 4: Value (max 2 positions, $25 each) ──
+    // ── Strategy 4: Value (max 3 positions, $40 each) ──
     if (runFullScan) {
       const value = findValue(markets, openPositions, skipReasons);
       log.scanned.value = value.length;
-      for (const v of value.slice(0, 2)) {
-        const trade = executeTrade(portfolio, "value", v.slug, v.question, v.trade_side, v.entry_price, 25,
+
+      // Use multi-agent forecast to validate value trades
+      for (const v of value.slice(0, 3)) {
+        const pm = { ...v }; // already parsed
+        const forecast = forecastMarket(pm);
+        // Only enter if forecast agrees with trade direction (or is neutral)
+        if (forecast.signal !== "HOLD") {
+          const forecastAgrees = (v.trade_side === "yes" && forecast.edge > 0) || (v.trade_side === "no" && forecast.edge < 0);
+          if (!forecastAgrees) {
+            skipReasons.push({ strategy: "value", slug: v.slug, reason: `Forecast disagrees: agents say ${forecast.signal}` });
+            continue;
+          }
+        }
+        const trade = executeTrade(portfolio, "value", v.slug, v.question, v.trade_side, v.entry_price, 40,
           { category: v.category, days_to_expiry: v.days_to_expiry });
-        if (trade) { executed.push(trade); log.executed.push({ id: trade.id, strategy: "value", slug: v.slug }); }
+        if (trade) { executed.push(trade); log.executed.push({ id: trade.id, strategy: "value", slug: v.slug, forecast_edge: forecast.edge_pct }); }
       }
     }
 
-    // Mark full scan time
+    // Mark full scan time + run forecast engine
     if (runFullScan) {
       await redisSet(LAST_FULL_SCAN_KEY, new Date().toISOString());
+
+      // Auto-generate forecasts during full scans (cached for dashboard)
+      try {
+        const forecastResults = [];
+        for (const m of markets) {
+          const pm = parseMarket(m);
+          if (pm.yes_price === null || pm.no_price === null) continue;
+          const q = pm.question.toLowerCase();
+          if (SKIP_KW.some(k => q.includes(k))) continue;
+          if (pm.volume < 10000) continue;
+          const classification = classifyMarket(pm.question);
+          if (!classification) continue;
+          forecastResults.push({
+            ...forecastMarket(pm),
+            classification,
+            decomposition: decomposeQuestion(pm),
+            score: scoreOpportunity(pm, classification),
+          });
+        }
+        forecastResults.sort((a, b) => Math.abs(b.edge_pct) - Math.abs(a.edge_pct));
+        await redisSet(FORECAST_KEY, {
+          timestamp: new Date().toISOString(),
+          markets_analyzed: markets.length,
+          forecasts_generated: forecastResults.length,
+          with_edge: forecastResults.filter(f => f.signal !== "HOLD").length,
+          top_forecasts: forecastResults.slice(0, 30),
+          agent_summary: {
+            base_rate: { description: "Historical resolution patterns, time-decay, category biases" },
+            causal: { description: "Volume momentum, spread analysis, liquidity signals" },
+            adversarial: { description: "Overconfidence detection, contrarian challenges, mean reversion" },
+            crowd: { description: "Volume-weighted market price as crowd wisdom signal" },
+          },
+          methodology: {
+            aggregation: "Confidence-weighted geometric mean",
+            calibration: "Logit extremizing (factor=1.5)",
+            edge_threshold: "5% vs market price",
+            confidence_threshold: "40% ensemble agreement",
+          },
+        });
+        log.scanned.forecasts_generated = forecastResults.length;
+      } catch (e) {
+        log.scanned.forecast_error = e.message;
+      }
     }
 
     // Check TP/SL exits (always runs)

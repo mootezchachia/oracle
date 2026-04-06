@@ -50,8 +50,8 @@ export default function Strategy100Panel({ data }) {
 
       {/* Allocation bars */}
       {allocations && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border text-center text-[9px] font-mono">
-          {Object.entries(allocations).map(([key, alloc]) => {
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-px bg-border text-center text-[9px] font-mono">
+          {Object.entries(allocations).filter(([key, alloc]) => alloc.budget > 0).map(([key, alloc]) => {
             const pct = alloc.budget > 0 ? (alloc.invested / alloc.budget) * 100 : 0;
             return (
               <div key={key} className="bg-bg-1 py-2.5 relative overflow-hidden hover:bg-bg-2/30 transition-colors">
