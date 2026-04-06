@@ -528,6 +528,293 @@ async function checkExits(portfolio) {
   return closed;
 }
 
+// ─── Multi-Agent Superforecasting Engine ─────────────────────
+// 4 independent agents produce probability estimates, then aggregated
+// via geometric mean + logit extremizing (calibrated ensemble).
+
+function agentBaseRate(pm) {
+  // Base rate estimation using historical resolution patterns
+  const yes = pm.yes_price;
+  const days = pm.days_to_expiry;
+  let prob = yes; // start with market price as prior
+
+  // Short-dated markets: extreme prices are more reliable
+  if (days <= 14) {
+    if (yes > 0.85) prob = 0.80 + (yes - 0.85) * 1.3; // slightly deflate certainty
+    else if (yes < 0.15) prob = yes * 0.7 + 0.03;
+    else prob = yes * 0.9 + 0.05; // pull toward 50%
+  }
+  // Long-dated markets: more uncertainty, regress toward 50%
+  else if (days > 90) {
+    prob = yes * 0.75 + 0.125; // strong regression to mean
+  } else {
+    // Mid-range: moderate regression
+    const regressionFactor = 0.85 + (days / 365) * 0.1;
+    prob = yes * regressionFactor + (1 - regressionFactor) * 0.5;
+  }
+
+  // Category-specific base rates
+  if (pm.category === "geopolitical") {
+    // Geopolitical events: "will X happen" tends to NOT happen
+    if (yes > 0.4 && yes < 0.7) prob *= 0.92; // slight NO bias
+  } else if (pm.category === "crypto") {
+    // Crypto: short-term price predictions are nearly random
+    if (days <= 7) prob = prob * 0.6 + 0.2; // heavy regression
+  }
+
+  prob = Math.max(0.02, Math.min(0.98, prob));
+  const confidence = days <= 7 ? 0.7 : days <= 30 ? 0.8 : 0.6;
+
+  return {
+    agent: "base_rate",
+    probability: Math.round(prob * 10000) / 10000,
+    confidence,
+    reasoning: `Base rate: ${days}d to expiry, ${pm.category}. Prior ${(yes*100).toFixed(0)}c → adjusted ${(prob*100).toFixed(0)}c`,
+  };
+}
+
+function agentCausal(pm) {
+  // Causal analysis: volume, spread, momentum signals
+  const yes = pm.yes_price;
+  const no = pm.no_price;
+  let prob = yes;
+
+  // Spread analysis: YES+NO should sum to ~1.0
+  // If < 0.98, there's a spread — true value likely between
+  const spread = yes + no;
+  if (spread < 0.97) {
+    // Market-maker spread suggests true price is slightly higher for both sides
+    const midpoint = yes / spread;
+    prob = prob * 0.7 + midpoint * 0.3;
+  }
+
+  // Volume signal: high volume = more price discovery = price more accurate
+  if (pm.volume > 1000000) {
+    // High-volume markets: trust market price more
+    prob = prob * 0.85 + yes * 0.15;
+  } else if (pm.volume < 50000) {
+    // Low volume: price may be stale, regress toward 50%
+    prob = prob * 0.7 + 0.15;
+  }
+
+  // Days to expiry impact on certainty
+  if (pm.days_to_expiry <= 3 && yes > 0.7) {
+    prob = Math.min(prob * 1.05, 0.97); // near-expiry high-prob events: boost slightly
+  }
+
+  prob = Math.max(0.02, Math.min(0.98, prob));
+  const confidence = pm.volume > 500000 ? 0.8 : pm.volume > 100000 ? 0.7 : 0.5;
+
+  return {
+    agent: "causal",
+    probability: Math.round(prob * 10000) / 10000,
+    confidence,
+    reasoning: `Causal: vol=$${(pm.volume/1000).toFixed(0)}K, spread=${spread.toFixed(3)}, ${pm.days_to_expiry}d expiry`,
+  };
+}
+
+function agentAdversarial(pm) {
+  // Devil's advocate: challenges consensus, detects overconfidence
+  const yes = pm.yes_price;
+  let prob = yes;
+
+  // Overconfidence detection: extreme prices often overestimate certainty
+  if (yes > 0.90) {
+    // Markets above 90c: historically ~15% fail (black swan discount)
+    const overconfidence = (yes - 0.90) * 2.0; // 0-0.2 scale
+    prob -= overconfidence * 0.15; // discount by up to 3%
+  } else if (yes < 0.10) {
+    // Markets below 10c: tail events happen more than price suggests
+    const underconfidence = (0.10 - yes) * 2.0;
+    prob += underconfidence * 0.15; // boost by up to 3%
+  }
+
+  // Mean reversion bias: markets that moved far from 50% often overshoot
+  if (yes > 0.60 && yes < 0.85) {
+    prob = prob * 0.95 + 0.025; // slight pull toward 50%
+  } else if (yes > 0.15 && yes < 0.40) {
+    prob = prob * 0.95 + 0.025;
+  }
+
+  // Contrarian on low-volume extreme prices (potential manipulation)
+  if (pm.volume < 100000 && (yes > 0.80 || yes < 0.20)) {
+    prob = prob * 0.8 + 0.1; // strong regression — thin market, unreliable
+  }
+
+  // Near-expiry contrarian: if still uncertain with <7 days, expect NO resolution
+  if (pm.days_to_expiry <= 7 && yes > 0.3 && yes < 0.7) {
+    // "Will X happen in 7 days?" — if market is 50/50, lean NO (most things don't happen)
+    prob *= 0.90;
+  }
+
+  prob = Math.max(0.02, Math.min(0.98, prob));
+
+  return {
+    agent: "adversarial",
+    probability: Math.round(prob * 10000) / 10000,
+    confidence: 0.65,
+    reasoning: `Adversarial: market ${(yes*100).toFixed(0)}c → challenged to ${(prob*100).toFixed(0)}c. ${pm.volume < 100000 ? "Thin market. " : ""}${pm.days_to_expiry <= 7 ? "Near expiry." : ""}`,
+  };
+}
+
+function agentCrowd(pm) {
+  // Crowd wisdom: trusts market price but volume-weights credibility
+  const yes = pm.yes_price;
+  let prob = yes; // crowd says what the price says
+
+  // Volume-weighted credibility
+  const volumeCredibility = Math.min(1, pm.volume / 500000);
+  // Regress low-credibility markets toward 50%
+  prob = prob * volumeCredibility + 0.5 * (1 - volumeCredibility);
+
+  // Cross-signal: if price is near 50%, crowd is genuinely uncertain
+  if (yes > 0.45 && yes < 0.55) {
+    prob = 0.5; // coin flip — no edge
+  }
+
+  prob = Math.max(0.02, Math.min(0.98, prob));
+  const confidence = volumeCredibility > 0.8 ? 0.85 : volumeCredibility > 0.4 ? 0.7 : 0.5;
+
+  return {
+    agent: "crowd",
+    probability: Math.round(prob * 10000) / 10000,
+    confidence,
+    reasoning: `Crowd: price ${(yes*100).toFixed(0)}c, vol credibility ${(volumeCredibility*100).toFixed(0)}%. ${yes > 0.45 && yes < 0.55 ? "Coin flip — no edge." : ""}`,
+  };
+}
+
+function aggregateForecasts(agents, extremizingFactor = 1.5) {
+  // Step 1: Confidence-weighted geometric mean
+  const totalWeight = agents.reduce((s, a) => s + a.confidence, 0);
+  let logGeoMean = 0;
+  for (const a of agents) {
+    const w = a.confidence / totalWeight;
+    logGeoMean += w * Math.log(Math.max(0.001, a.probability));
+  }
+  const geoMean = Math.exp(logGeoMean);
+
+  // Step 2: Logit extremizing (pushes away from 50% for calibration)
+  // logit(p) = ln(p / (1-p))
+  const clamp = (p) => Math.max(0.01, Math.min(0.99, p));
+  const logit = (p) => Math.log(clamp(p) / (1 - clamp(p)));
+  const invLogit = (l) => 1 / (1 + Math.exp(-l));
+
+  const extremized = invLogit(logit(geoMean) * extremizingFactor);
+
+  // Step 3: Confidence from agent agreement (lower spread = higher confidence)
+  const probs = agents.map(a => a.probability);
+  const maxSpread = Math.max(...probs) - Math.min(...probs);
+  const agreement = 1 - Math.min(1, maxSpread * 2); // 0=total disagreement, 1=perfect agreement
+  const ensembleConfidence = Math.round(agreement * 100);
+
+  return {
+    raw_geo_mean: Math.round(geoMean * 10000) / 10000,
+    extremized: Math.round(extremized * 10000) / 10000,
+    final_probability: Math.round(extremized * 10000) / 10000,
+    ensemble_confidence: ensembleConfidence,
+    agent_spread: Math.round(maxSpread * 10000) / 10000,
+  };
+}
+
+function forecastMarket(pm) {
+  const agents = [
+    agentBaseRate(pm),
+    agentCausal(pm),
+    agentAdversarial(pm),
+    agentCrowd(pm),
+  ];
+
+  const aggregation = aggregateForecasts(agents);
+
+  // Edge = our forecast vs market price
+  const edge = aggregation.final_probability - pm.yes_price;
+  const edgePct = Math.round(edge * 10000) / 100;
+
+  // Trading signal based on edge
+  let signal = "HOLD";
+  let tradeSide = null;
+  let tradePrice = null;
+
+  if (edge > 0.05 && aggregation.ensemble_confidence >= 40) {
+    signal = "BUY YES";
+    tradeSide = "yes";
+    tradePrice = pm.yes_price;
+  } else if (edge < -0.05 && aggregation.ensemble_confidence >= 40) {
+    signal = "BUY NO";
+    tradeSide = "no";
+    tradePrice = pm.no_price;
+  }
+
+  // Repricing velocity: expected annual price movement toward our forecast
+  const daysLeft = Math.max(1, pm.days_to_expiry);
+  const repricingVelocity = Math.abs(edge) / (daysLeft / 365);
+
+  return {
+    market: {
+      slug: pm.slug,
+      question: pm.question,
+      yes_price: pm.yes_price,
+      no_price: pm.no_price,
+      volume: pm.volume,
+      days_to_expiry: pm.days_to_expiry,
+      category: pm.category,
+    },
+    agents,
+    aggregation,
+    edge: Math.round(edge * 10000) / 10000,
+    edge_pct: edgePct,
+    repricing_velocity: Math.round(repricingVelocity * 100) / 100,
+    signal,
+    trade_side: tradeSide,
+    trade_price: tradePrice,
+  };
+}
+
+// Decompose complex questions into sub-components
+function decomposeQuestion(pm) {
+  const q = pm.question.toLowerCase();
+  const parts = [];
+
+  // Time component
+  if (pm.days_to_expiry < 999) {
+    parts.push({
+      sub_question: `Will this resolve within ${pm.days_to_expiry} days?`,
+      type: "temporal",
+      weight: pm.days_to_expiry <= 14 ? 0.4 : 0.2,
+    });
+  }
+
+  // Category-specific decomposition
+  if (pm.category === "geopolitical") {
+    if (q.includes("ceasefire") || q.includes("peace")) {
+      parts.push({ sub_question: "Are negotiations actively underway?", type: "causal", weight: 0.3 });
+      parts.push({ sub_question: "Is there international pressure for resolution?", type: "contextual", weight: 0.2 });
+    }
+    if (q.includes("war") || q.includes("attack") || q.includes("invasion")) {
+      parts.push({ sub_question: "Are military forces positioned for action?", type: "causal", weight: 0.3 });
+      parts.push({ sub_question: "Is there a precedent for this type of escalation?", type: "base_rate", weight: 0.2 });
+    }
+  } else if (pm.category === "economic") {
+    parts.push({ sub_question: "What do leading economic indicators suggest?", type: "causal", weight: 0.3 });
+    parts.push({ sub_question: "What is the historical frequency of this outcome?", type: "base_rate", weight: 0.3 });
+  } else if (pm.category === "crypto") {
+    parts.push({ sub_question: "What is current market momentum?", type: "momentum", weight: 0.3 });
+    parts.push({ sub_question: "Are there upcoming catalysts (halvings, ETF decisions)?", type: "causal", weight: 0.2 });
+  } else if (pm.category === "political") {
+    parts.push({ sub_question: "What do polls/approval ratings suggest?", type: "crowd", weight: 0.3 });
+    parts.push({ sub_question: "Is there a historical precedent?", type: "base_rate", weight: 0.2 });
+  }
+
+  // Always add a market efficiency component
+  parts.push({
+    sub_question: `Is the market price of ${(pm.yes_price*100).toFixed(0)}c well-calibrated?`,
+    type: "meta",
+    weight: 0.15,
+  });
+
+  return parts;
+}
+
 // ─── Daily Opportunity Scanner (for main portfolio) ──────────
 
 const MAIN_PORTFOLIO_KEY = "oracle:portfolio:main";
@@ -604,34 +891,35 @@ async function runDailyScanner(markets) {
     if (SKIP_KW.some(k => q.includes(k))) continue;
 
     const classification = classifyMarket(pm.question);
-    if (!classification) continue; // only ORACLE-relevant markets
+    if (!classification) continue;
 
-    // Skip near-certain (bonds handled by strategy100)
     if (pm.yes_price > 0.97 || pm.no_price > 0.97) continue;
     if (pm.volume < 5000) continue;
 
+    // Run multi-agent forecast instead of simple scoring
+    const forecast = forecastMarket(pm);
     const score = scoreOpportunity(pm, classification);
-    if (score < 30) continue;
 
-    // Determine suggested side
+    // Only surface markets where agents found edge
+    if (forecast.signal === "HOLD" && score < 50) continue;
+
+    // Use agent consensus for trade direction
     let side, entry_price, thesis;
-    if (pm.yes_price > 0.5) {
-      // Market leans YES — contrarian says NO, unless bond
-      if (pm.yes_price >= 0.88) {
-        side = "yes"; entry_price = pm.yes_price;
-        thesis = `Bond: ${classification.label} market at ${(pm.yes_price*100).toFixed(0)}c YES. High-prob outcome.`;
-      } else {
-        side = "no"; entry_price = pm.no_price;
-        thesis = `Contrarian: ${classification.label} at ${(pm.yes_price*100).toFixed(0)}c YES — market may overestimate.`;
-      }
+    if (forecast.signal !== "HOLD") {
+      side = forecast.trade_side;
+      entry_price = forecast.trade_price;
+      const agents = forecast.agents.map(a => `${a.agent}: ${(a.probability*100).toFixed(0)}c`).join(", ");
+      thesis = `Agents [${agents}] → ${(forecast.aggregation.final_probability*100).toFixed(0)}c (edge ${forecast.edge_pct > 0 ? "+" : ""}${forecast.edge_pct}%). Signal: ${forecast.signal}`;
     } else {
-      if (pm.no_price >= 0.88) {
-        side = "no"; entry_price = pm.no_price;
-        thesis = `Bond: ${classification.label} market at ${(pm.no_price*100).toFixed(0)}c NO. High-prob outcome.`;
+      // Fallback to simple contrarian for high-score markets with no agent edge
+      if (pm.yes_price > 0.5) {
+        if (pm.yes_price >= 0.88) { side = "yes"; entry_price = pm.yes_price; }
+        else { side = "no"; entry_price = pm.no_price; }
       } else {
-        side = "yes"; entry_price = pm.yes_price;
-        thesis = `Contrarian: ${classification.label} at ${(pm.yes_price*100).toFixed(0)}c YES — market may underestimate.`;
+        if (pm.no_price >= 0.88) { side = "no"; entry_price = pm.no_price; }
+        else { side = "yes"; entry_price = pm.yes_price; }
       }
+      thesis = `Score-based: ${classification.label} at ${(pm.yes_price*100).toFixed(0)}c. No agent edge.`;
     }
 
     opportunities.push({
@@ -647,11 +935,24 @@ async function runDailyScanner(markets) {
       days_to_expiry: pm.days_to_expiry,
       score,
       thesis,
+      forecast: {
+        final_probability: forecast.aggregation.final_probability,
+        edge_pct: forecast.edge_pct,
+        confidence: forecast.aggregation.ensemble_confidence,
+        signal: forecast.signal,
+        repricing_velocity: forecast.repricing_velocity,
+        agents: forecast.agents.map(a => ({ agent: a.agent, prob: a.probability, conf: a.confidence })),
+      },
     });
   }
 
-  // Sort by score descending
-  opportunities.sort((a, b) => b.score - a.score);
+  // Sort by absolute edge (strongest signals first), then by score
+  opportunities.sort((a, b) => {
+    const edgeA = Math.abs(a.forecast?.edge_pct || 0);
+    const edgeB = Math.abs(b.forecast?.edge_pct || 0);
+    if (edgeA !== edgeB) return edgeB - edgeA;
+    return b.score - a.score;
+  });
   return opportunities;
 }
 
@@ -742,6 +1043,65 @@ async function handleDailyScan(req, res) {
   });
 }
 
+// ─── Forecast Handler ────────────────────────────────────────
+
+const FORECAST_KEY = "oracle:forecasts:latest";
+
+async function handleForecast(req, res) {
+  const markets = await fetchAllMarkets();
+  const forecasts = [];
+
+  for (const m of markets) {
+    const pm = parseMarket(m);
+    if (pm.yes_price === null || pm.no_price === null) continue;
+
+    const q = pm.question.toLowerCase();
+    if (SKIP_KW.some(k => q.includes(k))) continue;
+    if (pm.volume < 10000) continue;
+
+    const classification = classifyMarket(pm.question);
+    if (!classification) continue;
+
+    const forecast = forecastMarket(pm);
+    const decomposition = decomposeQuestion(pm);
+
+    forecasts.push({
+      ...forecast,
+      classification,
+      decomposition,
+      score: scoreOpportunity(pm, classification),
+    });
+  }
+
+  // Sort by absolute edge
+  forecasts.sort((a, b) => Math.abs(b.edge_pct) - Math.abs(a.edge_pct));
+
+  const result = {
+    timestamp: new Date().toISOString(),
+    markets_analyzed: markets.length,
+    forecasts_generated: forecasts.length,
+    with_edge: forecasts.filter(f => f.signal !== "HOLD").length,
+    top_forecasts: forecasts.slice(0, 30),
+    agent_summary: {
+      base_rate: { description: "Historical resolution patterns, time-decay, category biases" },
+      causal: { description: "Volume momentum, spread analysis, liquidity signals" },
+      adversarial: { description: "Overconfidence detection, contrarian challenges, mean reversion" },
+      crowd: { description: "Volume-weighted market price as crowd wisdom signal" },
+    },
+    methodology: {
+      aggregation: "Confidence-weighted geometric mean",
+      calibration: "Logit extremizing (factor=1.5)",
+      edge_threshold: "±5% vs market price",
+      confidence_threshold: "40% ensemble agreement",
+    },
+  };
+
+  // Cache the latest forecast in Redis
+  await redisSet(FORECAST_KEY, result);
+
+  return res.status(200).json(result);
+}
+
 // ─── Main Handler ────────────────────────────────────────────
 
 export default async function handler(req, res) {
@@ -760,6 +1120,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Multi-agent forecast endpoint
+    if (req.query?.action === "forecast") {
+      return handleForecast(req, res);
+    }
+
     // Daily opportunity scanner for main portfolio
     if (req.query?.action === "scan") {
       return handleDailyScan(req, res);

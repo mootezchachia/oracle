@@ -123,6 +123,15 @@ export default async function handler(req, res) {
     return handleHistory(req, res);
   }
 
+  // Forecast view: ?view=forecast (reads cached forecast from Redis)
+  if (req.query?.view === "forecast") {
+    try {
+      const forecast = await redisGet("oracle:forecasts:latest");
+      if (!forecast) return res.status(200).json({ top_forecasts: [], markets_analyzed: 0, forecasts_generated: 0, with_edge: 0, message: "No forecast data yet. Trigger via /api/strategy100-run?action=forecast" });
+      return res.status(200).json(forecast);
+    } catch (err) { return res.status(500).json({ error: err.message }); }
+  }
+
   // Research views: ?view=research, ?action=research-run
   if (req.query?.view === "research") {
     return handleResearchRead(req, res);
