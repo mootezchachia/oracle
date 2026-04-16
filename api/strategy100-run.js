@@ -18,6 +18,7 @@
  */
 
 import { redisGet, redisSet, isRedisConfigured } from './lib/redis.js';
+import { notify } from './lib/notify.js';
 
 const GAMMA_API = "https://gamma-api.polymarket.com";
 const PORTFOLIO_KEY = "oracle:strategy100:portfolio";
@@ -1321,6 +1322,37 @@ async function handleAIAnalyze(req, res) {
   if (result.market_regime) brief += `\nRegime: ${result.market_regime}\n`;
 
   result.brief = brief;
+
+  // Diff alerts vs. last run — push notification only for NEW alerts
+  try {
+    const prev = await redisGet(ANALYSIS_KEY);
+    const prevAlertKeys = new Set(
+      (prev?.health_checks || [])
+        .filter(h => h.status === 'alert' || h.status === 'exit')
+        .map(h => h.question)
+    );
+    const newAlerts = alerts.filter(a => !prevAlertKeys.has(a.question));
+    const topOpps = result.opportunities.filter(o => Math.abs(o.edge_pct || 0) >= 5).slice(0, 3);
+
+    if (newAlerts.length > 0 || topOpps.length > 0) {
+      const lines = [];
+      for (const a of newAlerts.slice(0, 5)) {
+        lines.push(`!! ${a.question?.slice(0, 50)}\n   ${a.reason}`);
+      }
+      for (const o of topOpps) {
+        const edgeSign = o.edge_pct >= 0 ? '+' : '';
+        lines.push(`[${o.signal}] ${o.question?.slice(0, 50)}\n   Mkt:${Math.round(o.market_price * 100)}c AI:${Math.round(o.ai_probability * 100)}c Edge:${edgeSign}${o.edge_pct?.toFixed(1)}%`);
+      }
+      notify({
+        title: `ORACLE AI: ${newAlerts.length} new alert${newAlerts.length === 1 ? '' : 's'}, ${topOpps.length} opportunit${topOpps.length === 1 ? 'y' : 'ies'}`,
+        body: lines.join('\n\n'),
+        priority: newAlerts.length > 0 ? "high" : "default",
+        tags: newAlerts.length > 0 ? ["rotating_light", "warning"] : ["brain", "mag"],
+        click: "https://oracle-psi-orpin.vercel.app",
+      }).catch(() => {});
+    }
+  } catch {}
+
   await Promise.all([redisSet(ANALYSIS_KEY, result), redisSet(BRIEF_KEY, brief)]);
 
   return res.status(200).json({
@@ -1527,6 +1559,27 @@ export default async function handler(req, res) {
     delete portfolio._researchParams;
     await savePortfolio(portfolio);
     await appendLog(log);
+
+    // Push notifications for trade activity (non-blocking, best-effort)
+    if (executed.length > 0 || closed.length > 0) {
+      const lines = [];
+      for (const t of executed.slice(0, 5)) {
+        lines.push(`OPENED #${t.id} [${t.strategy}] ${t.question?.slice(0, 50)} | ${t.side.toUpperCase()} @ ${(t.entry_price * 100).toFixed(0)}c ($${t.invested})`);
+      }
+      for (const t of closed.slice(0, 5)) {
+        const sign = t.pnl >= 0 ? '+' : '';
+        lines.push(`CLOSED #${t.id} [${t.strategy}] ${sign}$${t.pnl} (${sign}${t.pnl_pct}%) — ${t.close_reason}`);
+      }
+      const extra = (executed.length + closed.length > 10) ? `\n(+${executed.length + closed.length - 10} more)` : '';
+      const profit = closed.reduce((s, t) => s + (t.pnl || 0), 0);
+      notify({
+        title: `ORACLE: ${executed.length} opened, ${closed.length} closed`,
+        body: lines.join('\n') + extra + (closed.length > 0 ? `\n\nSession P&L: ${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}` : ''),
+        priority: (profit >= 50 || profit <= -50) ? "high" : "default",
+        tags: profit >= 0 ? ["money_with_wings", "chart_with_upwards_trend"] : ["chart_with_downwards_trend"],
+        click: "https://oracle-psi-orpin.vercel.app",
+      }).catch(() => {});
+    }
 
     return res.status(200).json({
       status: "ok",
