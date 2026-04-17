@@ -70,12 +70,15 @@ export function signAction(cmd, arg = "", dayOverride) {
  * Verify a token; accepts today's or yesterday's day (so buttons work across midnight).
  */
 export function verifyAction(cmd, arg, token) {
-  if (!token) return false;
+  if (!token || typeof token !== "string") return false;
   const today = new Date().toISOString().slice(0, 10);
   const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
   for (const day of [today, yesterday]) {
     const { token: expected } = signAction(cmd, arg, day);
-    if (crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))) return true;
+    if (token.length !== expected.length) continue;
+    try {
+      if (crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected))) return true;
+    } catch {}
   }
   return false;
 }
