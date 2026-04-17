@@ -18,7 +18,10 @@
  */
 
 import { redisGet, redisSet, isRedisConfigured } from './lib/redis.js';
-import { notify } from './lib/notify.js';
+import {
+  notify, notifyRaw, verifyAction, snoozeAlert,
+  isTradingEnabled, setTradingEnabled, flushQueue,
+} from './lib/notify.js';
 
 const GAMMA_API = "https://gamma-api.polymarket.com";
 const PORTFOLIO_KEY = "oracle:strategy100:portfolio";
@@ -1343,12 +1346,19 @@ async function handleAIAnalyze(req, res) {
         const edgeSign = o.edge_pct >= 0 ? '+' : '';
         lines.push(`[${o.signal}] ${o.question?.slice(0, 50)}\n   Mkt:${Math.round(o.market_price * 100)}c AI:${Math.round(o.ai_probability * 100)}c Edge:${edgeSign}${o.edge_pct?.toFixed(1)}%`);
       }
+      const alertActions = [];
+      if (newAlerts[0]?.question) {
+        alertActions.push({ label: "Snooze 24h", cmd: "snooze", arg: newAlerts[0].question.slice(0, 40) });
+      }
+      alertActions.push({ label: "Open dashboard", url: "https://oracle-psi-orpin.vercel.app", method: "GET" });
       notify({
         title: `ORACLE AI: ${newAlerts.length} new alert${newAlerts.length === 1 ? '' : 's'}, ${topOpps.length} opportunit${topOpps.length === 1 ? 'y' : 'ies'}`,
         body: lines.join('\n\n'),
-        priority: newAlerts.length > 0 ? "high" : "default",
+        severity: newAlerts.length > 0 ? "alert" : "info",
         tags: newAlerts.length > 0 ? ["rotating_light", "warning"] : ["brain", "mag"],
         click: "https://oracle-psi-orpin.vercel.app",
+        actions: alertActions,
+        dedupeKey: newAlerts[0]?.question ? `alert:${newAlerts[0].question.slice(0, 40)}` : undefined,
       }).catch(() => {});
     }
   } catch {}
@@ -1363,6 +1373,186 @@ async function handleAIAnalyze(req, res) {
     health_checks: result.health_checks.length,
     brief,
   });
+}
+
+// ─── Notification Action Endpoints ───────────────────────────
+
+async function handleNtfyCmd(req, res) {
+  const { cmd, arg = "", t } = req.query || {};
+  if (!cmd || !t) return res.status(400).json({ error: "missing cmd or token" });
+  if (!verifyAction(cmd, arg, t)) return res.status(401).json({ error: "invalid or expired token" });
+
+  if (cmd === "pause") {
+    await setTradingEnabled(false);
+    await notifyRaw({ title: "ORACLE: trading paused", body: "New trade opens are blocked. Exits still run. Tap Resume to re-enable.", priority: "high", tags: ["pause_button"], actions: [{ label: "Resume trading", cmd: "resume" }] });
+    return res.status(200).json({ ok: true, trading_enabled: false });
+  }
+  if (cmd === "resume") {
+    await setTradingEnabled(true);
+    await notifyRaw({ title: "ORACLE: trading resumed", body: "Strategies will execute on the next scan.", priority: "default", tags: ["play_button"] });
+    return res.status(200).json({ ok: true, trading_enabled: true });
+  }
+  if (cmd === "snooze") {
+    await snoozeAlert(`alert:${arg}`, 24);
+    await notifyRaw({ title: "ORACLE: alert snoozed", body: `"${arg.slice(0, 60)}" suppressed for 24h.`, priority: "min", tags: ["zzz"] });
+    return res.status(200).json({ ok: true, snoozed: arg });
+  }
+  if (cmd === "close") {
+    const id = Number(arg);
+    const portfolio = await loadPortfolio();
+    const trade = portfolio.trades.find(tr => tr.id === id && tr.status === "open");
+    if (!trade) {
+      await notifyRaw({ title: `ORACLE: can't close #${arg}`, body: "Trade not found or already closed.", priority: "default", tags: ["x"] });
+      return res.status(404).json({ error: "trade not found or not open" });
+    }
+    const pm = await fetchPrice(trade.slug).catch(() => null);
+    const price = pm ? (trade.side === "yes" ? pm.yes_price : pm.no_price) : trade.entry_price;
+    const pnl = price != null ? (price - trade.entry_price) * trade.shares : 0;
+    trade.status = "closed";
+    trade.close_price = price || trade.entry_price;
+    trade.close_reason = "manual_close";
+    trade.pnl = Math.round(pnl * 100) / 100;
+    trade.pnl_pct = Math.round((pnl / trade.invested) * 10000) / 100;
+    trade.closed_at = new Date().toISOString();
+    const alloc = portfolio.allocations[trade.strategy];
+    if (alloc) { alloc.cash += (trade.invested + trade.pnl); alloc.invested -= trade.invested; }
+    portfolio.account.total_cash += (trade.invested + trade.pnl);
+    portfolio.stats.total_pnl += trade.pnl;
+    if (trade.pnl > 0) portfolio.stats.wins++; else portfolio.stats.losses++;
+    await savePortfolio(portfolio);
+    await notifyRaw({
+      title: `ORACLE: closed #${trade.id} manually`,
+      body: `${trade.question?.slice(0, 60)}\n${trade.pnl >= 0 ? '+' : ''}$${trade.pnl} (${trade.pnl_pct}%)`,
+      priority: "high",
+      tags: trade.pnl >= 0 ? ["money_with_wings"] : ["chart_with_downwards_trend"],
+    });
+    return res.status(200).json({ ok: true, closed: trade });
+  }
+  if (cmd === "status") {
+    const portfolio = await loadPortfolio();
+    const open = portfolio.trades.filter(tr => tr.status === "open");
+    const body = `Cash: $${portfolio.account.total_cash.toFixed(0)}\nTotal P&L: ${portfolio.stats.total_pnl >= 0 ? '+' : ''}$${portfolio.stats.total_pnl.toFixed(0)}\nOpen: ${open.length} positions\nTrading: ${await isTradingEnabled() ? 'ENABLED' : 'PAUSED'}`;
+    await notifyRaw({ title: "ORACLE status", body, priority: "default", tags: ["bar_chart"] });
+    return res.status(200).json({ ok: true });
+  }
+  return res.status(400).json({ error: "unknown cmd" });
+}
+
+async function handleDailyDigest(req, res) {
+  const portfolio = await loadPortfolio();
+  const analysis = await redisGet(ANALYSIS_KEY);
+  const log = (await redisGet(LOG_KEY)) || [];
+  const since = Date.now() - 24 * 3600 * 1000;
+
+  const open = portfolio.trades.filter(t => t.status === "open");
+  const closedToday = portfolio.trades.filter(t => t.status === "closed" && t.closed_at && new Date(t.closed_at).getTime() > since);
+  const openedToday = portfolio.trades.filter(t => t.opened_at && new Date(t.opened_at).getTime() > since);
+  const dayPnl = closedToday.reduce((s, t) => s + (t.pnl || 0), 0);
+  const totalInvested = Object.values(portfolio.allocations).reduce((s, a) => s + a.invested, 0);
+  const totalValue = portfolio.account.total_cash + totalInvested;
+
+  const queue = await flushQueue();
+  const alerts = (analysis?.health_checks || []).filter(h => h.status === 'alert' || h.status === 'exit').slice(0, 3);
+  const opps = (analysis?.opportunities || []).filter(o => Math.abs(o.edge_pct || 0) >= 5).slice(0, 3);
+
+  const lines = [];
+  lines.push(`Portfolio: $${totalValue.toFixed(0)} (cash $${portfolio.account.total_cash.toFixed(0)} + invested $${totalInvested.toFixed(0)})`);
+  lines.push(`24h P&L: ${dayPnl >= 0 ? '+' : ''}$${dayPnl.toFixed(2)} across ${closedToday.length} closes, ${openedToday.length} opens`);
+  lines.push(`Open positions: ${open.length}`);
+  lines.push(`Trading: ${await isTradingEnabled() ? 'ENABLED' : 'PAUSED'}`);
+  if (opps.length) {
+    lines.push("");
+    lines.push("TOP OPPORTUNITIES:");
+    for (const o of opps) {
+      const edge = o.edge_pct >= 0 ? '+' : '';
+      lines.push(`[${o.signal}] ${o.question?.slice(0, 50)} — Edge ${edge}${o.edge_pct?.toFixed(1)}%`);
+    }
+  }
+  if (alerts.length) {
+    lines.push("");
+    lines.push("ALERTS:");
+    for (const a of alerts) lines.push(`!! ${a.question?.slice(0, 50)} — ${a.reason?.slice(0, 80)}`);
+  }
+  if (queue.length) {
+    lines.push("");
+    lines.push(`OVERNIGHT QUEUE (${queue.length} deferred):`);
+    for (const q of queue.slice(-5)) lines.push(`- ${q.title}`);
+  }
+
+  await notifyRaw({
+    title: `ORACLE morning digest — ${dayPnl >= 0 ? '+' : ''}$${dayPnl.toFixed(0)} overnight`,
+    body: lines.join('\n'),
+    priority: "default",
+    tags: ["newspaper", dayPnl >= 0 ? "chart_with_upwards_trend" : "chart_with_downwards_trend"],
+    click: "https://oracle-psi-orpin.vercel.app",
+    actions: [
+      { label: "Pause trading", cmd: "pause" },
+      { label: "Status", cmd: "status" },
+      { label: "Dashboard", url: "https://oracle-psi-orpin.vercel.app", method: "GET" },
+    ],
+  });
+
+  return res.status(200).json({ ok: true, day_pnl: dayPnl, open: open.length, queue_flushed: queue.length });
+}
+
+async function handleHealthPing(req, res) {
+  const now = Date.now();
+  await redisSet("oracle:health:last_ping", now);
+
+  const analysis = await redisGet(ANALYSIS_KEY);
+  const portfolio = await loadPortfolio();
+  const briefAgeH = analysis?.timestamp ? (now - new Date(analysis.timestamp).getTime()) / 3600000 : 999;
+  const portfolioAgeH = portfolio?.last_updated ? (now - new Date(portfolio.last_updated).getTime()) / 3600000 : 999;
+
+  const problems = [];
+  if (briefAgeH > 26) problems.push(`AI brief stale (${briefAgeH.toFixed(0)}h old)`);
+  if (portfolioAgeH > 8) problems.push(`Portfolio not updated in ${portfolioAgeH.toFixed(0)}h`);
+
+  if (problems.length) {
+    await notifyRaw({
+      title: "ORACLE: pipeline warning",
+      body: problems.join('\n'),
+      priority: "high",
+      tags: ["warning", "construction"],
+    });
+  } else if (req.query?.verbose === "1") {
+    await notifyRaw({
+      title: "ORACLE: all systems healthy",
+      body: `AI brief ${briefAgeH.toFixed(0)}h old, portfolio ${portfolioAgeH.toFixed(0)}h old.`,
+      priority: "min",
+      tags: ["green_heart"],
+    });
+  }
+  return res.status(200).json({ ok: true, problems, briefAgeH, portfolioAgeH });
+}
+
+async function handleRiskCheck(req, res) {
+  const portfolio = await loadPortfolio();
+  const start = portfolio.account.starting_balance || 1000;
+  const totalInvested = Object.values(portfolio.allocations).reduce((s, a) => s + a.invested, 0);
+  const totalValue = portfolio.account.total_cash + totalInvested;
+  const drawdown = ((start - totalValue) / start) * 100;
+  const open = portfolio.trades.filter(t => t.status === "open");
+
+  // Concentration: largest single position as % of portfolio
+  const largest = open.reduce((m, t) => Math.max(m, t.invested || 0), 0);
+  const concentrationPct = totalValue > 0 ? (largest / totalValue) * 100 : 0;
+
+  const alerts = [];
+  if (drawdown >= 10) alerts.push(`Drawdown ${drawdown.toFixed(1)}% from starting balance`);
+  if (concentrationPct >= 25) alerts.push(`Single position is ${concentrationPct.toFixed(0)}% of portfolio`);
+  if (open.length >= 20) alerts.push(`${open.length} open positions — capacity risk`);
+
+  if (alerts.length) {
+    await notifyRaw({
+      title: "ORACLE: risk alert",
+      body: alerts.join('\n'),
+      priority: drawdown >= 15 ? "urgent" : "high",
+      tags: ["rotating_light", "warning"],
+      actions: [{ label: "Pause trading", cmd: "pause" }, { label: "Status", cmd: "status" }],
+    });
+  }
+  return res.status(200).json({ ok: true, drawdown, concentrationPct, open_count: open.length, alerts });
 }
 
 // ─── Main Handler ────────────────────────────────────────────
@@ -1405,6 +1595,26 @@ export default async function handler(req, res) {
       return handleDailyScan(req, res);
     }
 
+    // Morning digest (drains quiet-hours queue + writes summary to ntfy)
+    if (req.query?.action === "daily-digest") {
+      return handleDailyDigest(req, res);
+    }
+
+    // Silent pipeline heartbeat
+    if (req.query?.action === "health-ping") {
+      return handleHealthPing(req, res);
+    }
+
+    // Portfolio risk check (drawdown / concentration)
+    if (req.query?.action === "risk-check") {
+      return handleRiskCheck(req, res);
+    }
+
+    // ntfy action button callback — HMAC-signed
+    if (req.query?.action === "ntfy-cmd") {
+      return handleNtfyCmd(req, res);
+    }
+
     // Reset
     if (req.query?.reset === "1") {
       const p = newPortfolio();
@@ -1428,6 +1638,12 @@ export default async function handler(req, res) {
     // Track open positions for diversification checks
     const openPositions = portfolio.trades.filter(t => t.status === "open");
 
+    // Kill switch — opens blocked when trading_enabled=false; closes still run
+    const tradingEnabled = await isTradingEnabled();
+    if (!tradingEnabled) {
+      log.trading_paused = true;
+    }
+
     // Determine if we need a full scan (bonds/expertise/value)
     // These only run once per day; crypto15m runs every 15 min
     const lastFullScan = await redisGet(LAST_FULL_SCAN_KEY);
@@ -1441,7 +1657,7 @@ export default async function handler(req, res) {
     log.scanned.total_markets = markets.length;
 
     // ── Strategy 1: Bonds (max 6 positions, $50 each) ──
-    if (runFullScan) {
+    if (runFullScan && tradingEnabled) {
       const bonds = findBonds(markets, openPositions, skipReasons);
       log.scanned.bonds = bonds.length;
       for (const b of bonds.slice(0, 6)) {
@@ -1452,7 +1668,7 @@ export default async function handler(req, res) {
     }
 
     // ── Strategy 2: Expertise (max 4 positions, $60 each) ──
-    if (runFullScan) {
+    if (runFullScan && tradingEnabled) {
       const expertise = findExpertise(markets, openPositions, skipReasons);
       log.scanned.expertise = expertise.length;
 
@@ -1479,7 +1695,7 @@ export default async function handler(req, res) {
     skipReasons.push({ strategy: "crypto15m", slug: "all", reason: "Strategy disabled: -$101 lifetime loss, binary market SL failure" });
 
     // ── Strategy 4: Value (max 3 positions, $40 each) ──
-    if (runFullScan) {
+    if (runFullScan && tradingEnabled) {
       const value = findValue(markets, openPositions, skipReasons);
       log.scanned.value = value.length;
 
@@ -1572,12 +1788,20 @@ export default async function handler(req, res) {
       }
       const extra = (executed.length + closed.length > 10) ? `\n(+${executed.length + closed.length - 10} more)` : '';
       const profit = closed.reduce((s, t) => s + (t.pnl || 0), 0);
+      const tradeActions = [];
+      if (executed[0]?.id != null) {
+        tradeActions.push({ label: `Close #${executed[0].id}`, cmd: "close", arg: String(executed[0].id) });
+      }
+      tradeActions.push({ label: "Pause trading", cmd: "pause" });
+      tradeActions.push({ label: "Dashboard", url: "https://oracle-psi-orpin.vercel.app", method: "GET" });
+      const bigMove = Math.abs(profit) >= 100;
       notify({
         title: `ORACLE: ${executed.length} opened, ${closed.length} closed`,
         body: lines.join('\n') + extra + (closed.length > 0 ? `\n\nSession P&L: ${profit >= 0 ? '+' : ''}$${profit.toFixed(2)}` : ''),
-        priority: (profit >= 50 || profit <= -50) ? "high" : "default",
-        tags: profit >= 0 ? ["money_with_wings", "chart_with_upwards_trend"] : ["chart_with_downwards_trend"],
+        severity: bigMove ? "urgent" : (Math.abs(profit) >= 50 ? "alert" : "trade"),
+        tags: profit >= 0 ? ["money_with_wings", "chart_with_upwards_trend"] : ["chart_with_downwards_trend", "warning"],
         click: "https://oracle-psi-orpin.vercel.app",
+        actions: tradeActions,
       }).catch(() => {});
     }
 
