@@ -1,29 +1,25 @@
 /**
  * Notification helper — pushes alerts to ntfy.sh.
  *
- * Topic is read from:
+ * Topic resolution order:
  *   1. process.env.NTFY_TOPIC (preferred — set in Vercel)
- *   2. Redis key "oracle:config:ntfy_topic" (fallback — set via API)
+ *   2. Redis key "oracle:config:ntfy_topic" (override — set via API)
+ *   3. DEFAULT_TOPIC constant below (always works out-of-the-box)
  *
- * If neither is set, notifications silently no-op so the pipeline never breaks.
- *
- * Usage:
- *   import { notify } from './lib/notify.js';
- *   await notify({ title: "New Alert", body: "Details...", priority: "high", tags: ["warning"] });
+ * Rotate DEFAULT_TOPIC (and re-subscribe on phone) if you suspect leakage.
  */
 
 import { redisGet } from './redis.js';
 
 const NTFY_URL = "https://ntfy.sh";
+const DEFAULT_TOPIC = "oracle-188d7e28a2af1544";
 
 let _topicCache = null;
 let _topicCacheAt = 0;
 
 async function resolveTopic() {
-  // Env var wins
   if (process.env.NTFY_TOPIC) return process.env.NTFY_TOPIC;
 
-  // Redis fallback, cached for 5 min
   if (_topicCache && Date.now() - _topicCacheAt < 300000) return _topicCache;
   try {
     const t = await redisGet("oracle:config:ntfy_topic");
@@ -33,7 +29,8 @@ async function resolveTopic() {
       return _topicCache;
     }
   } catch {}
-  return null;
+
+  return DEFAULT_TOPIC;
 }
 
 /**
@@ -47,7 +44,7 @@ async function resolveTopic() {
  */
 export async function notify({ title, body, priority = "default", tags = [], click } = {}) {
   const topic = await resolveTopic();
-  if (!topic) return { sent: false, reason: "NTFY_TOPIC not configured" };
+  if (!topic) return { sent: false, reason: "no topic resolved" };
 
   const headers = {
     "Content-Type": "text/plain; charset=utf-8",
@@ -72,5 +69,5 @@ export async function notify({ title, body, priority = "default", tags = [], cli
 }
 
 export function isNotifyConfigured() {
-  return !!process.env.NTFY_TOPIC;
+  return true;
 }
