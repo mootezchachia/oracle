@@ -11,7 +11,10 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 import requests
-import feedparser
+try:
+    import feedparser
+except ImportError:
+    feedparser = None
 from flask import Flask, jsonify, send_from_directory, Response
 
 # ─── Config ──────────────────────────────────────────────────────────────────
@@ -341,6 +344,9 @@ def fetch_fred():
 
 def fetch_news():
     """Fetch headlines from RSS feeds"""
+    if feedparser is None:
+        return []
+
     results = []
     seen = set()
 
@@ -502,6 +508,32 @@ def background_scanner():
         time.sleep(300)  # 5 minutes
 
 
+def background_strategy():
+    """Run $100 strategy loop autonomously every 5 minutes."""
+    import sys
+    sys.path.insert(0, str(ROOT / "nerve"))
+    time.sleep(30)  # let the main scanner warm up first
+
+    while True:
+        try:
+            from strategy_100 import run_full_scan, load_portfolio
+            results = run_full_scan(auto_execute=True)
+            n_exec = len(results.get("executed", []))
+            n_closed = len(results.get("closed", []))
+            p = load_portfolio()
+            pnl = p["stats"]["total_pnl"]
+            cache["status"].setdefault("strategy100", {})
+            cache["status"]["strategy100"] = {
+                "last_run": datetime.now(timezone.utc).isoformat(),
+                "new_trades": n_exec,
+                "closed": n_closed,
+                "total_pnl": pnl,
+            }
+        except Exception as e:
+            cache["status"]["errors"].append(f"Strategy100: {str(e)[:100]}")
+        time.sleep(300)  # 5 minutes
+
+
 # ─── Flask App ───────────────────────────────────────────────────────────────
 
 app = Flask(__name__, static_folder="dashboard")
@@ -636,6 +668,79 @@ def api_rss():
                     headers={"Cache-Control": "no-cache"})
 
 
+@app.route("/api/strategy100")
+def api_strategy100():
+    """$100 strategy portfolio with live prices"""
+    portfolio_path = DATA_DIR / "strategy_100_portfolio.json"
+
+    if not portfolio_path.exists():
+        return jsonify({
+            "account": {"starting_balance": 100, "total_cash": 100},
+            "allocations": {
+                "bonds": {"budget": 60, "cash": 60, "invested": 0},
+                "expertise": {"budget": 30, "cash": 30, "invested": 0},
+                "flash_crash": {"budget": 10, "cash": 10, "invested": 0},
+            },
+            "trades": [],
+            "positions": [],
+            "closed_trades": [],
+            "stats": {"total_trades": 0, "wins": 0, "losses": 0, "total_pnl": 0},
+        })
+
+    portfolio = json.loads(portfolio_path.read_text())
+    open_trades = [t for t in portfolio.get("trades", []) if t.get("status") == "open"]
+    closed_trades = [t for t in portfolio.get("trades", []) if t.get("status") == "closed"]
+
+    positions = []
+    total_invested = 0
+    positions_value = 0
+
+    for trade in open_trades:
+        pos = dict(trade)
+        try:
+            r = requests.get(f"{GAMMA_API}/markets", params={"slug": trade["slug"]}, timeout=10)
+            r.raise_for_status()
+            markets = r.json()
+            if markets:
+                prices = json.loads(markets[0].get("outcomePrices", "[]"))
+                yes_price = float(prices[0]) if prices else None
+                no_price = float(prices[1]) if len(prices) > 1 else None
+                current_price = yes_price if trade["side"] == "yes" else no_price
+                if current_price is not None:
+                    current_value = round(trade["shares"] * current_price, 2)
+                    pnl = round(current_value - trade["invested"], 2)
+                    pnl_pct = round(((current_value / trade["invested"]) - 1) * 100, 2) if trade["invested"] > 0 else 0
+                    pos["current_price"] = current_price
+                    pos["current_value"] = current_value
+                    pos["pnl"] = pnl
+                    pos["pnl_pct"] = pnl_pct
+                    total_invested += trade["invested"]
+                    positions_value += current_value
+        except Exception:
+            pass
+        positions.append(pos)
+
+    total_cash = portfolio.get("account", {}).get("total_cash", 100)
+    total_value = round(total_cash + positions_value, 2)
+    total_return = round(total_value - portfolio.get("account", {}).get("starting_balance", 100), 2)
+    starting = portfolio.get("account", {}).get("starting_balance", 100)
+
+    return jsonify({
+        "account": {
+            **portfolio.get("account", {}),
+            "positions_value": round(positions_value, 2),
+            "total_value": total_value,
+            "total_return": total_return,
+            "total_return_pct": round((total_return / starting) * 100, 2) if starting else 0,
+        },
+        "allocations": portfolio.get("allocations", {}),
+        "positions": positions,
+        "closed_trades": closed_trades,
+        "stats": portfolio.get("stats", {}),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
 @app.route("/api/scan", methods=["POST"])
 def api_scan():
     threading.Thread(target=refresh_cache, daemon=True).start()
@@ -692,5 +797,10 @@ if __name__ == "__main__":
     # Start background scanner
     scanner = threading.Thread(target=background_scanner, daemon=True)
     scanner.start()
+
+    # Start $100 strategy loop (scans + trades every 5 min)
+    print("  Starting $100 strategy auto-trader...")
+    strategy = threading.Thread(target=background_strategy, daemon=True)
+    strategy.start()
 
     app.run(host="0.0.0.0", port=3000, debug=False, threaded=True)

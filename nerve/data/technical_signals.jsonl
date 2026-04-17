@@ -1,0 +1,25 @@
+{"source": "rsi_15m", "direction": -0.3698449973558144, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:01.324768+00:00", "metadata": {"rsi": 31.51}}
+{"source": "macd_15m", "direction": -1.0, "strength": 0.3952824889061864, "timeframe": "short", "timestamp": "2026-03-22T01:05:01.324853+00:00", "metadata": {"histogram": -0.251446, "momentum": 0.047936}}
+{"source": "bollinger_15m", "direction": -0.19124175977262747, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:01.325164+00:00", "metadata": {"position": -0.637, "band_width_pct": 5.398}}
+{"source": "vwap_15m", "direction": -0.32011079275234494, "strength": 0.16005539637617247, "timeframe": "short", "timestamp": "2026-03-22T01:05:01.325201+00:00", "metadata": {"vwap": 89.045217, "deviation_pct": -1.601}}
+{"source": "heiken_ashi_15m", "direction": -0.6, "strength": 1.0, "timeframe": "short", "timestamp": "2026-03-22T01:05:01.325515+00:00", "metadata": {"trend_count": -3}}
+{"source": "rsi_15m", "direction": -0.3698449973558144, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.160493+00:00", "metadata": {"rsi": 31.51}}
+{"source": "macd_15m", "direction": -1.0, "strength": 0.3952824889061864, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.160562+00:00", "metadata": {"histogram": -0.251446, "momentum": 0.047936}}
+{"source": "bollinger_15m", "direction": -0.19124175977262747, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.160849+00:00", "metadata": {"position": -0.637, "band_width_pct": 5.398}}
+{"source": "vwap_15m", "direction": -0.32011079275234494, "strength": 0.16005539637617247, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.160878+00:00", "metadata": {"vwap": 89.045217, "deviation_pct": -1.601}}
+{"source": "heiken_ashi_15m", "direction": -0.6, "strength": 1.0, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.161126+00:00", "metadata": {"trend_count": -3}}
+{"source": "rsi_15m", "direction": -0.3698449973558144, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.927153+00:00", "metadata": {"rsi": 31.51}}
+{"source": "macd_15m", "direction": -1.0, "strength": 0.3952824889061864, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.927216+00:00", "metadata": {"histogram": -0.251446, "momentum": 0.047936}}
+{"source": "bollinger_15m", "direction": -0.19124175977262747, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.927561+00:00", "metadata": {"position": -0.637, "band_width_pct": 5.398}}
+{"source": "vwap_15m", "direction": -0.32011079275234494, "strength": 0.16005539637617247, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.927591+00:00", "metadata": {"vwap": 89.045217, "deviation_pct": -1.601}}
+{"source": "heiken_ashi_15m", "direction": -0.6, "strength": 1.0, "timeframe": "short", "timestamp": "2026-03-22T01:05:02.927889+00:00", "metadata": {"trend_count": -3}}
+{"source": "rsi_15m", "direction": -0.3698449973558144, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:03.881362+00:00", "metadata": {"rsi": 31.51}}
+{"source": "macd_15m", "direction": -1.0, "strength": 0.3952824889061864, "timeframe": "short", "timestamp": "2026-03-22T01:05:03.881425+00:00", "metadata": {"histogram": -0.251446, "momentum": 0.047936}}
+{"source": "bollinger_15m", "direction": -0.19124175977262747, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:03.881707+00:00", "metadata": {"position": -0.637, "band_width_pct": 5.398}}
+{"source": "vwap_15m", "direction": -0.32011079275234494, "strength": 0.16005539637617247, "timeframe": "short", "timestamp": "2026-03-22T01:05:03.881741+00:00", "metadata": {"vwap": 89.045217, "deviation_pct": -1.601}}
+{"source": "heiken_ashi_15m", "direction": -0.6, "strength": 1.0, "timeframe": "short", "timestamp": "2026-03-22T01:05:03.881991+00:00", "metadata": {"trend_count": -3}}
+{"source": "rsi_15m", "direction": -0.3698449973558144, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:04.682307+00:00", "metadata": {"rsi": 31.51}}
+{"source": "macd_15m", "direction": -1.0, "strength": 0.3952824889061864, "timeframe": "short", "timestamp": "2026-03-22T01:05:04.682370+00:00", "metadata": {"histogram": -0.251446, "momentum": 0.047936}}
+{"source": "bollinger_15m", "direction": -0.19124175977262747, "strength": 0.2, "timeframe": "short", "timestamp": "2026-03-22T01:05:04.682648+00:00", "metadata": {"position": -0.637, "band_width_pct": 5.398}}
+{"source": "vwap_15m", "direction": -0.32011079275234494, "strength": 0.16005539637617247, "timeframe": "short", "timestamp": "2026-03-22T01:05:04.682676+00:00", "metadata": {"vwap": 89.045217, "deviation_pct": -1.601}}
+{"source": "heiken_ashi_15m", "direction": -0.6, "strength": 1.0, "timeframe": "short", "timestamp": "2026-03-22T01:05:04.682921+00:00", "metadata": {"trend_count": -3}}

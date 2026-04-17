@@ -5,7 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html { font-size: 13px; }
+html { font-size: 13px; scroll-behavior: smooth; }
 
 body {
   background: #030506;
@@ -23,14 +23,76 @@ body::after {
   z-index: 9999;
 }
 
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #1e2a3a; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #2d4156; }
 
+/* ─── Animations ─── */
 @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.8)} }
 @keyframes ticker-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 @keyframes logo-glow { 0%,100%{box-shadow:0 0 15px rgba(240,180,41,.3)} 50%{box-shadow:0 0 25px rgba(240,180,41,.5)} }
+@keyframes fade-in { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes slide-up { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
 
 .animate-pulse-dot { animation: pulse 2s infinite; }
 .animate-ticker { animation: ticker-scroll 60s linear infinite; }
 .animate-logo { animation: logo-glow 4s ease-in-out infinite; }
+.animate-fade-in { animation: fade-in 0.3s ease-out both; }
+.animate-slide-up { animation: slide-up 0.4s ease-out both; }
+
+/* Staggered children animation */
+.stagger-children > * { animation: fade-in 0.3s ease-out both; }
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 350ms; }
+
+/* Card hover lift effect */
+.card-hover {
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card-hover:hover {
+  transform: translateY(-1px);
+  border-color: #2d4156;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* Glass effect for panels */
+.glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Tab indicator animation */
+.tab-active {
+  position: relative;
+}
+.tab-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #f0b429;
+  border-radius: 1px;
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Smooth tab content transition */
+.tab-content {
+  animation: fade-in 0.25s ease-out;
+}
+
+/* Loading skeleton shimmer */
+.skeleton {
+  background: linear-gradient(90deg, #111820 25%, #1a2332 50%, #111820 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

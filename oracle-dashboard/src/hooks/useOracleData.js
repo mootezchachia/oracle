@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
-const ENDPOINTS = ['markets', 'reddit', 'news', 'fred', 'predictions', 'status', 'price-history', 'portfolio']
+const ENDPOINTS = ['markets', 'reddit', 'news', 'fred', 'predictions', 'price-history', 'portfolio', 'signals', 'crypto', 'strategy100', 'strategy100?view=history', 'strategy100?view=research', 'strategy100?view=forecast', 'strategy100-run?action=ai-brief']
 
 async function fetchJSON(endpoint) {
   try {
@@ -22,6 +22,13 @@ export function useOracleData(interval = 60000) {
     priceHistory: {},
     portfolio: null,
     status: null,
+    signals: null,
+    crypto: null,
+    strategy100: null,
+    history: null,
+    research: null,
+    forecast: null,
+    aiBrief: null,
     loading: true,
     lastUpdate: null,
   })
@@ -35,9 +42,15 @@ export function useOracleData(interval = 60000) {
       news: results[2].value || prev.news,
       fred: results[3].value || prev.fred,
       predictions: results[4].value || prev.predictions,
-      status: results[5].value || prev.status,
-      priceHistory: results[6].value || prev.priceHistory,
-      portfolio: results[7].value || prev.portfolio,
+      priceHistory: results[5].value || prev.priceHistory,
+      portfolio: results[6].value || prev.portfolio,
+      signals: results[7].value || prev.signals,
+      crypto: results[8].value || prev.crypto,
+      strategy100: results[9].value || prev.strategy100,
+      history: results[10].value || prev.history,
+      research: results[11].value || prev.research,
+      forecast: results[12].value || prev.forecast,
+      aiBrief: results[13].value || prev.aiBrief,
       loading: false,
       lastUpdate: Date.now(),
     }))

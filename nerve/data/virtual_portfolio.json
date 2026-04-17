@@ -1,0 +1,111 @@
+{
+  "account": {
+    "starting_balance": 10000,
+    "cash": 7300.82
+  },
+  "trades": [
+    {
+      "id": 1,
+      "number": 1,
+      "slug": "us-x-iran-ceasefire-by-march-31",
+      "question": "US x Iran ceasefire by March 31?",
+      "side": "no",
+      "entry_price": 0.86,
+      "shares": 581.4,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 2,
+      "number": 2,
+      "slug": "will-crude-oil-cl-hit-high-120-by-end-of-march-766-813-597",
+      "question": "Oil $120 by end of March?",
+      "side": "yes",
+      "entry_price": 0.411,
+      "shares": 1217.11,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "closed",
+      "source": "manual",
+      "closed_at": "2026-03-22T00:22:22.226005+00:00",
+      "exit_price": 0.165,
+      "current_value": 200.82,
+      "pnl": -299.18,
+      "pnl_pct": -59.84,
+      "close_reason": "Stop loss: -59.8%"
+    },
+    {
+      "id": 3,
+      "number": 3,
+      "slug": "us-x-iran-ceasefire-by-may-31-313",
+      "question": "Iran ceasefire by May 31?",
+      "side": "no",
+      "entry_price": 0.51,
+      "shares": 980.39,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 4,
+      "number": 4,
+      "slug": "will-crude-oil-cl-hit-high-140-by-end-of-march-934-621",
+      "question": "Oil $140 by end of March?",
+      "side": "no",
+      "entry_price": 0.8,
+      "shares": 625.0,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "closed",
+      "source": "manual",
+      "closed_at": "2026-03-22T00:22:22.528003+00:00",
+      "exit_price": 0.96,
+      "current_value": 600.0,
+      "pnl": 100.0,
+      "pnl_pct": 20.0,
+      "close_reason": "Take profit: 20.0%"
+    },
+    {
+      "id": 5,
+      "number": 5,
+      "slug": "will-the-iranian-regime-fall-by-the-end-of-2026",
+      "question": "Iranian regime fall before 2027?",
+      "side": "no",
+      "entry_price": 0.63,
+      "shares": 793.65,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 6,
+      "number": 6,
+      "slug": "us-x-iran-ceasefire-by-june-30-752",
+      "question": "Iran ceasefire by June 30?",
+      "side": "no",
+      "entry_price": 0.416,
+      "shares": 1201.7,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    },
+    {
+      "id": 7,
+      "number": 7,
+      "slug": "will-russia-enter-druzkhivka-by-june-30-933-897",
+      "question": "Russia enter Druzhkivka by June 30?",
+      "side": "no",
+      "entry_price": 0.76,
+      "shares": 658.29,
+      "invested": 500,
+      "date": "2026-03-15",
+      "status": "open",
+      "source": "manual"
+    }
+  ]
+}

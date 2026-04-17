@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { createChart } from "lightweight-charts";
+import { createChart, AreaSeries } from "lightweight-charts";
 
 export default function PriceChart({ history, oracleValue, label }) {
   const containerRef = useRef(null);
@@ -37,7 +37,7 @@ export default function PriceChart({ history, oracleValue, label }) {
       height: containerRef.current.clientHeight || 300,
     });
 
-    const areaSeries = chart.addAreaSeries({
+    const areaSeries = chart.addSeries(AreaSeries, {
       lineColor: "#3fb950",
       topColor: "rgba(63, 185, 80, 0.28)",
       bottomColor: "rgba(63, 185, 80, 0.02)",

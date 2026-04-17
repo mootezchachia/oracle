@@ -1,0 +1,765 @@
+{
+  "markets": [
+    {
+      "market_id": "1669480",
+      "question": "XRP Up or Down - March 22, 2:00AM-2:05AM ET",
+      "slug": "xrp-updown-5m-1774159200",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T06:05:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-5m-1774159200"
+    },
+    {
+      "market_id": "1670125",
+      "question": "XRP Up or Down - March 22, 4:15AM-4:30AM ET",
+      "slug": "xrp-updown-15m-1774167300",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T08:30:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-15m-1774167300"
+    },
+    {
+      "market_id": "1674170",
+      "question": "XRP Up or Down - March 22, 1:55PM-2:00PM ET",
+      "slug": "xrp-updown-5m-1774202100",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T18:00:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-5m-1774202100"
+    },
+    {
+      "market_id": "1669959",
+      "question": "XRP Up or Down - March 22, 3:45AM-4:00AM ET",
+      "slug": "xrp-updown-15m-1774165500",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T08:00:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-15m-1774165500"
+    },
+    {
+      "market_id": "1669482",
+      "question": "Solana Up or Down - March 22, 2:00AM-2:15AM ET",
+      "slug": "sol-updown-15m-1774159200",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T06:15:00Z",
+      "url": "https://polymarket.com/event/sol-updown-15m-1774159200"
+    },
+    {
+      "market_id": "1669918",
+      "question": "Ethereum Up or Down - March 22, 3:30AM-3:45AM ET",
+      "slug": "eth-updown-15m-1774164600",
+      "crypto": "ETH",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T07:45:00Z",
+      "url": "https://polymarket.com/event/eth-updown-15m-1774164600"
+    },
+    {
+      "market_id": "1670471",
+      "question": "XRP Up or Down - March 22, 5:05AM-5:10AM ET",
+      "slug": "xrp-updown-5m-1774170300",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T09:10:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-5m-1774170300"
+    },
+    {
+      "market_id": "1674174",
+      "question": "Dogecoin Up or Down - March 22, 1:55PM-2:00PM ET",
+      "slug": "doge-updown-5m-1774202100",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T18:00:00Z",
+      "url": "https://polymarket.com/event/doge-updown-5m-1774202100"
+    },
+    {
+      "market_id": "1670641",
+      "question": "XRP Up or Down - March 22, 5:40AM-5:45AM ET",
+      "slug": "xrp-updown-5m-1774172400",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T09:45:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-5m-1774172400"
+    },
+    {
+      "market_id": "1671465",
+      "question": "Solana Up or Down - March 22, 7:15AM-7:30AM ET",
+      "slug": "sol-updown-15m-1774178100",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T11:30:00Z",
+      "url": "https://polymarket.com/event/sol-updown-15m-1774178100"
+    },
+    {
+      "market_id": "1671494",
+      "question": "XRP Up or Down - March 22, 7:25AM-7:30AM ET",
+      "slug": "xrp-updown-5m-1774178700",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T11:30:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-5m-1774178700"
+    },
+    {
+      "market_id": "1670120",
+      "question": "Ethereum Up or Down - March 22, 4:15AM-4:30AM ET",
+      "slug": "eth-updown-15m-1774167300",
+      "crypto": "ETH",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T08:30:00Z",
+      "url": "https://polymarket.com/event/eth-updown-15m-1774167300"
+    },
+    {
+      "market_id": "1670569",
+      "question": "Ethereum Up or Down - March 22, 5:15AM-5:30AM ET",
+      "slug": "eth-updown-15m-1774170900",
+      "crypto": "ETH",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T09:30:00Z",
+      "url": "https://polymarket.com/event/eth-updown-15m-1774170900"
+    },
+    {
+      "market_id": "1671195",
+      "question": "Solana Up or Down - March 22, 6:15AM-6:30AM ET",
+      "slug": "sol-updown-15m-1774174500",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T10:30:00Z",
+      "url": "https://polymarket.com/event/sol-updown-15m-1774174500"
+    },
+    {
+      "market_id": "1671590",
+      "question": "Bitcoin Up or Down - March 22, 7:50AM-7:55AM ET",
+      "slug": "btc-updown-5m-1774180200",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T11:55:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774180200"
+    },
+    {
+      "market_id": "1670331",
+      "question": "Bitcoin Up or Down - March 22, 4:30AM-4:45AM ET",
+      "slug": "btc-updown-15m-1774168200",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T08:45:00Z",
+      "url": "https://polymarket.com/event/btc-updown-15m-1774168200"
+    },
+    {
+      "market_id": "1670450",
+      "question": "Solana Up or Down - March 22, 5:00AM-5:15AM ET",
+      "slug": "sol-updown-15m-1774170000",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T09:15:00Z",
+      "url": "https://polymarket.com/event/sol-updown-15m-1774170000"
+    },
+    {
+      "market_id": "1671514",
+      "question": "XRP Up or Down - March 22, 7:30AM-7:45AM ET",
+      "slug": "xrp-updown-15m-1774179000",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T11:45:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-15m-1774179000"
+    },
+    {
+      "market_id": "1670326",
+      "question": "Ethereum Up or Down - March 22, 4:30AM-4:45AM ET",
+      "slug": "eth-updown-15m-1774168200",
+      "crypto": "ETH",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T08:45:00Z",
+      "url": "https://polymarket.com/event/eth-updown-15m-1774168200"
+    },
+    {
+      "market_id": "1670455",
+      "question": "Bitcoin Up or Down - March 22, 5:00AM-5:15AM ET",
+      "slug": "btc-updown-15m-1774170000",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T09:15:00Z",
+      "url": "https://polymarket.com/event/btc-updown-15m-1774170000"
+    },
+    {
+      "market_id": "1670454",
+      "question": "Ethereum Up or Down - March 22, 5:00AM-5:15AM ET",
+      "slug": "eth-updown-15m-1774170000",
+      "crypto": "ETH",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T09:15:00Z",
+      "url": "https://polymarket.com/event/eth-updown-15m-1774170000"
+    },
+    {
+      "market_id": "1670597",
+      "question": "Ethereum Up or Down - March 22, 5:30AM-5:45AM ET",
+      "slug": "eth-updown-15m-1774171800",
+      "crypto": "ETH",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T09:45:00Z",
+      "url": "https://polymarket.com/event/eth-updown-15m-1774171800"
+    },
+    {
+      "market_id": "1670574",
+      "question": "XRP Up or Down - March 22, 5:15AM-5:30AM ET",
+      "slug": "xrp-updown-15m-1774170900",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T09:30:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-15m-1774170900"
+    },
+    {
+      "market_id": "1671236",
+      "question": "XRP Up or Down - March 22, 6:30AM-6:45AM ET",
+      "slug": "xrp-updown-15m-1774175400",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T10:45:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-15m-1774175400"
+    },
+    {
+      "market_id": "1670330",
+      "question": "XRP Up or Down - March 22, 4:30AM-4:35AM ET",
+      "slug": "xrp-updown-5m-1774168200",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T08:35:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-5m-1774168200"
+    },
+    {
+      "market_id": "1670363",
+      "question": "XRP Up or Down - March 22, 4:35AM-4:40AM ET",
+      "slug": "xrp-updown-5m-1774168500",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T08:40:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-5m-1774168500"
+    },
+    {
+      "market_id": "1669910",
+      "question": "XRP Up or Down - March 22, 3:30AM-3:45AM ET",
+      "slug": "xrp-updown-15m-1774164600",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T07:45:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-15m-1774164600"
+    },
+    {
+      "market_id": "1669920",
+      "question": "Bitcoin Up or Down - March 22, 3:30AM-3:45AM ET",
+      "slug": "btc-updown-15m-1774164600",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T07:45:00Z",
+      "url": "https://polymarket.com/event/btc-updown-15m-1774164600"
+    },
+    {
+      "market_id": "1670124",
+      "question": "Bitcoin Up or Down - March 22, 4:15AM-4:30AM ET",
+      "slug": "btc-updown-15m-1774167300",
+      "crypto": "SOL",
+      "up_price": 0.495,
+      "down_price": 0.505,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.495,
+        0.505
+      ],
+      "volume": 9.92,
+      "end_date": "2026-03-22T08:30:00Z",
+      "url": "https://polymarket.com/event/btc-updown-15m-1774167300"
+    },
+    {
+      "market_id": "1668477",
+      "question": "Bitcoin Up or Down - March 21, 11:40PM-11:45PM ET",
+      "slug": "btc-updown-5m-1774150800",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.9,
+      "end_date": "2026-03-22T03:45:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774150800"
+    },
+    {
+      "market_id": "1668484",
+      "question": "Bitcoin Up or Down - March 21, 11:45PM-11:50PM ET",
+      "slug": "btc-updown-5m-1774151100",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.9,
+      "end_date": "2026-03-22T03:50:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774151100"
+    },
+    {
+      "market_id": "1668495",
+      "question": "Bitcoin Up or Down - March 21, 11:50PM-11:55PM ET",
+      "slug": "btc-updown-5m-1774151400",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.9,
+      "end_date": "2026-03-22T03:55:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774151400"
+    },
+    {
+      "market_id": "1677190",
+      "question": "Bitcoin Up or Down - March 22, 7:30PM-7:35PM ET",
+      "slug": "btc-updown-5m-1774222200",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.80392,
+      "end_date": "2026-03-22T23:35:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774222200"
+    },
+    {
+      "market_id": "1677425",
+      "question": "Bitcoin Up or Down - March 22, 8:15PM-8:20PM ET",
+      "slug": "btc-updown-5m-1774224900",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.80392,
+      "end_date": "2026-03-23T00:20:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774224900"
+    },
+    {
+      "market_id": "1669743",
+      "question": "Bitcoin Up or Down - March 22, 2:55AM-3:00AM ET",
+      "slug": "btc-updown-5m-1774162500",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.80392,
+      "end_date": "2026-03-22T07:00:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774162500"
+    },
+    {
+      "market_id": "1669992",
+      "question": "XRP Up or Down - March 22, 4:00AM-8:00AM ET",
+      "slug": "xrp-updown-4h-1774166400",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.80392,
+      "end_date": "2026-03-22T12:00:00Z",
+      "url": "https://polymarket.com/event/xrp-updown-4h-1774166400"
+    },
+    {
+      "market_id": "1669362",
+      "question": "Ethereum Up or Down - March 22, 1:15AM-1:30AM ET",
+      "slug": "eth-updown-15m-1774156500",
+      "crypto": "ETH",
+      "up_price": 0.495,
+      "down_price": 0.505,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.495,
+        0.505
+      ],
+      "volume": 9.80392,
+      "end_date": "2026-03-22T05:30:00Z",
+      "url": "https://polymarket.com/event/eth-updown-15m-1774156500"
+    },
+    {
+      "market_id": "1669969",
+      "question": "Bitcoin Up or Down - March 22, 3:50AM-3:55AM ET",
+      "slug": "btc-updown-5m-1774165800",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.80392,
+      "end_date": "2026-03-22T07:55:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774165800"
+    },
+    {
+      "market_id": "1672891",
+      "question": "Dogecoin Up or Down - March 22, 11:45AM-12:00PM ET",
+      "slug": "doge-updown-15m-1774194300",
+      "crypto": "SOL",
+      "up_price": 0.5,
+      "down_price": 0.5,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.5,
+        0.5
+      ],
+      "volume": 9.721958999999998,
+      "end_date": "2026-03-22T16:00:00Z",
+      "url": "https://polymarket.com/event/doge-updown-15m-1774194300"
+    },
+    {
+      "market_id": "1670121",
+      "question": "Bitcoin Up or Down - March 22, 4:15AM-4:20AM ET",
+      "slug": "btc-updown-5m-1774167300",
+      "crypto": "SOL",
+      "up_price": 0.505,
+      "down_price": 0.495,
+      "outcomes": [
+        "Up",
+        "Down"
+      ],
+      "prices": [
+        0.505,
+        0.495
+      ],
+      "volume": 9.705881,
+      "end_date": "2026-03-22T08:20:00Z",
+      "url": "https://polymarket.com/event/btc-updown-5m-1774167300"
+    }
+  ],
+  "updated": "2026-03-22T01:04:59.714480+00:00"
+}
