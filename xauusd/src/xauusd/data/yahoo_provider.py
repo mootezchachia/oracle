@@ -35,12 +35,15 @@ _BASE = "https://query1.finance.yahoo.com/v8/finance/chart/"
 _TIMEOUT = aiohttp.ClientTimeout(total=25)
 
 # Yahoo interval + the range needed to satisfy typical bar counts.
+# Ranges are the maximum Yahoo actually serves per interval. Asking for more
+# returns 422, so these are limits rather than preferences — and a longer range
+# directly improves the warm-up, which is what the H4 EMA200 needs.
 _INTERVALS: dict[Timeframe, tuple[str, str]] = {
-    Timeframe.M1: ("1m", "5d"),
-    Timeframe.M5: ("5m", "1mo"),
-    Timeframe.M15: ("15m", "1mo"),
-    Timeframe.H1: ("1h", "3mo"),
-    Timeframe.H4: ("1h", "1y"),      # aggregated locally
+    Timeframe.M1: ("1m", "7d"),
+    Timeframe.M5: ("5m", "60d"),
+    Timeframe.M15: ("15m", "60d"),
+    Timeframe.H1: ("1h", "6mo"),
+    Timeframe.H4: ("1h", "2y"),      # aggregated locally
 }
 
 
