@@ -211,6 +211,96 @@ Grafana or a shell script at the same JSON.
 | `GET /ws` | Websocket push |
 | `POST /tv/webhook` | TradingView inbound context |
 
+## Auto-trading a demo account
+
+Execution is **off by default**. The system is a monitor first. When you turn
+it on it places real orders on whatever account the terminal is logged into —
+so the first gate is the account type.
+
+### The safety contract
+
+| Gate | Behaviour |
+|---|---|
+| `require_demo_account: true` | The MT5 broker **refuses to arm** on a live account and releases the terminal. An unrecognised account type is treated as live, never as "probably demo". |
+| `symbol_allowlist: [XAUUSD]` | Checked against the symbol the broker *resolved*, so `XAUUSD.r` passes and `EURUSD` cannot. |
+| `magic: 20260806` | Tags every order. The system never modifies or closes a position it did not open — your manual trades on the same account are untouchable. |
+| `max_open_positions: 1` | Two XAUUSD positions is one position at double the intended risk. |
+| `max_daily_loss_percent: 3.0` | Disarms for the rest of the UTC day. The counter only ever rolls *forward*, so a backwards clock jump cannot clear it. |
+| `kill_switch_file` / `XAUUSD_KILL_SWITCH` | Stops all new entries immediately, no restart or config edit. |
+| Algo Trading check | If the terminal has algo trading disabled, it refuses to arm rather than sending orders that will be rejected. |
+
+### Step 1 — paper mode, anywhere
+
+Prove the whole path works before any terminal is involved. Paper mode needs no
+MT5, runs on Linux or macOS, and performs fills, break-even moves, partial
+closes and trailing for real in software.
+
+```bash
+XAUUSD_EXECUTION__ENABLED=true \
+XAUUSD_EXECUTION__MODE=paper \
+python -m xauusd run
+```
+
+Watch the **Execution** card on the dashboard. Leave it running for a few days.
+
+### Step 2 — MT5 demo account
+
+On Windows, with a demo account logged into the terminal and **Algo Trading
+enabled** (the toolbar button):
+
+```powershell
+pip install -r requirements-mt5.txt
+
+$env:XAUUSD_EXECUTION__ENABLED = "true"
+$env:XAUUSD_EXECUTION__MODE = "mt5"
+python -m xauusd run
+```
+
+The startup log tells you exactly what it armed against:
+
+```
+MT5 execution armed: DEMO account 5001234 on MetaQuotes-Demo,
+symbol=XAUUSD, balance=10000.00 USD, magic=20260806
+```
+
+If it says `EXECUTION DISARMED`, read the reason — it is one of the gates
+above, and every one of them is protecting you from something.
+
+### What it does once filled
+
+The broker holds a hard stop and the final target, so a crashed monitor leaves
+a **protected** position rather than a naked one. In software, on a 15-second
+loop:
+
+- **break-even** at +1R (a hair past entry, so BE still covers costs)
+- **partial closes** at TP1 and TP2 per `risk.partial_percents`
+- **ATR trailing** after +1.5R, and the stop only ever moves forward
+
+### Manual controls
+
+```bash
+python -m xauusd positions     # account, and every position we own
+python -m xauusd flatten       # EMERGENCY: close everything, now
+touch data/HALT                # stop new entries; existing ones stay managed
+```
+
+### Honest limitations
+
+- **The MT5 path is untested against a real terminal.** It is covered by a
+  faithful fake that reproduces the failure modes that actually bite — filling
+  modes, minimum stop distances, volume steps, foreign positions — but I could
+  not run it against MetaTrader from this environment. Watch the first few
+  trades on demo.
+- **Paper mode flatters you.** Fills pay a fixed spread; slippage, requotes,
+  partial fills, swap and commission are not modelled. Paper beats demo, and
+  demo beats live.
+- **Signal price is not fill price.** The signal is computed on a candle close;
+  the order fills at the live quote moments later. Planned and realised risk
+  differ slightly, and the position tracks the realised one.
+- **Run it on demo until the journal has a real sample.** Not one good week —
+  a sample. The optimiser wants ~25 resolved signals before it will adjust a
+  single weight, and that is a reasonable bar for you too.
+
 ## Backtesting
 
 ```bash
@@ -258,7 +348,7 @@ Secrets should always come from the environment, never the committed YAML.
 ## Tests
 
 ```bash
-python -m pytest -q          # 189 tests, ~8s, fully offline
+python -m pytest -q          # 230 tests, ~9s, fully offline
 ```
 
 The suite asserts both directions of the core property: the engine **can**
@@ -281,6 +371,7 @@ src/xauusd/
   dashboard/       async web dashboard
   backtest/        replay engine and metrics
   learning/        journal and adaptive optimiser
+  execution/       broker abstraction, MT5 and paper brokers, order manager
   integrations/    TradingView bridge
 ```
 
@@ -301,6 +392,9 @@ That is what lets the backtester and the live engine share one code path.
 - **Backtest fills are optimistic in one respect** — it assumes you were at the
   screen when the signal fired. Slippage beyond the configured spread
   allowance is not modelled.
-- **This is a monitoring and analysis system, not an execution system.** It
-  places no orders. Signals are decision support for a human, and past
-  performance in a backtest is not a forecast.
+- **Execution is opt-in and demo-first.** With `execution.enabled: false`
+  (the default) the system places no orders at all, and signals are decision
+  support for a human. Turning it on is a deliberate act with a demo-account
+  gate in front of it.
+- **A backtest is not a forecast.** Past performance in replay says nothing
+  certain about tomorrow, and this system has not been validated live.

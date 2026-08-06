@@ -275,6 +275,55 @@ risk:
   trail_atr_multiple: 1.2
   spread_allowance_usd: 0.35     # typical XAUUSD spread padding
 
+# --- Order execution --------------------------------------------------------
+#  OFF by default. The system is a monitor first; turning this on makes it
+#  place real orders on whatever account the terminal is logged into.
+#
+#  Read this before enabling:
+#    * `require_demo_account: true` makes the MT5 broker REFUSE to arm on a
+#      live account. It is the single most important line in this file.
+#    * `symbol_allowlist` is checked against the symbol the broker actually
+#      resolved, so a server that maps GOLD elsewhere cannot slip through.
+#    * Orders carry `magic`. The system never modifies or closes a position it
+#      did not open, so your manual trades on the same account are safe.
+#    * Backtest first. An unvalidated strategy plus live execution is how
+#      accounts disappear.
+execution:
+  enabled: false
+  mode: paper                    # paper | mt5
+
+  # paper : simulated, no terminal needed — use this to dry-run anywhere
+  # mt5   : real orders through the MetaTrader 5 terminal (Windows only,
+  #         Algo Trading must be enabled in the toolbar)
+
+  require_demo_account: true     # refuse to arm on a live account
+  symbol_allowlist: [XAUUSD]     # nothing else is ever traded
+  magic: 20260806                # identifies this system's positions
+  order_comment: "xauusd-sentinel"
+  max_slippage_points: 20
+
+  # Account-level protection the per-signal score cannot express.
+  max_open_positions: 1          # two XAUUSD positions is one at double risk
+  max_daily_trades: 4
+  max_daily_loss_percent: 3.0    # disarm for the rest of the UTC day
+  min_free_margin_percent: 30.0
+
+  # Touch this file (or set XAUUSD_KILL_SWITCH=1) to stop all new entries
+  # immediately, without restarting or editing config.
+  kill_switch_file: "data/HALT"
+
+  # Position management once a trade is live. The broker always holds the hard
+  # stop and the final target, so a crashed monitor leaves a protected
+  # position rather than a naked one.
+  manage:
+    enabled: true
+    interval_seconds: 15
+    break_even_at_r: 1.0
+    break_even_offset_r: 0.1     # a hair beyond entry, so BE still covers costs
+    trail_after_r: 1.5
+    trail_atr_multiple: 1.2
+    partial_closes: true         # scale out at TP1/TP2 per risk.partial_percents
+
 # --- Notifications ----------------------------------------------------------
 notify:
   telegram:

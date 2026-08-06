@@ -172,6 +172,80 @@ def cmd_calendar(args: argparse.Namespace, config: Config) -> int:
     return asyncio.run(_show())
 
 
+def cmd_flatten(args: argparse.Namespace, config: Config) -> int:
+    """Emergency: close every position this system owns, right now."""
+    from .execution import ExecutionManager, build_broker
+
+    async def _flatten() -> int:
+        cfg = config.override({"execution": {"enabled": True}})
+        manager = ExecutionManager(cfg, build_broker(cfg))
+        if not await manager.start():
+            print(f"could not connect: {manager.disarm_reason}", file=sys.stderr)
+            return 1
+        try:
+            positions = await manager.broker.positions()
+            if not positions:
+                print("no open positions")
+                return 0
+            print(f"closing {len(positions)} position(s)...")
+            for result in await manager.flatten("manual flatten"):
+                status = "closed" if result.ok else f"FAILED — {result.error}"
+                print(f"  ticket {result.ticket}: {status}")
+            remaining = await manager.broker.positions()
+            if remaining:
+                print(f"WARNING: {len(remaining)} position(s) still open", file=sys.stderr)
+                return 1
+            print("all positions closed")
+            return 0
+        finally:
+            await manager.close()
+
+    return asyncio.run(_flatten())
+
+
+def cmd_positions(args: argparse.Namespace, config: Config) -> int:
+    """Show the account and any positions this system owns."""
+    from .execution import ExecutionManager, build_broker
+
+    async def _show() -> int:
+        cfg = config.override({"execution": {"enabled": True}})
+        manager = ExecutionManager(cfg, build_broker(cfg))
+        if not await manager.start():
+            print(f"could not connect: {manager.disarm_reason}", file=sys.stderr)
+            return 1
+        try:
+            snapshot = await manager.snapshot()
+            if args.json:
+                print(json.dumps(snapshot, indent=2, default=str))
+                return 0
+
+            account = snapshot["account"] or {}
+            print("═" * 70)
+            print(f" ACCOUNT  {account.get('login', '—')} @ {account.get('server', '—')}")
+            print(f" Type     {account.get('type', '—')}"
+                  f"{'  ⚠ REAL MONEY' if account.get('is_demo') is False else ''}")
+            print(f" Balance  {account.get('balance', 0):.2f} {account.get('currency', '')}"
+                  f"   Equity {account.get('equity', 0):.2f}")
+            print(f" Broker   {snapshot['broker']}   armed={snapshot['armed']}")
+            if snapshot["kill_switch"]["active"]:
+                print(f" HALTED   {snapshot['kill_switch']['reason']}")
+            print("─" * 70)
+
+            positions = snapshot["positions"]
+            if not positions:
+                print(" No open positions.")
+            for position in positions:
+                print(f" #{position['ticket']}  {position['direction']:<5}"
+                      f" {position['volume']:.2f} lots  entry {position['entry']:.2f}"
+                      f"  SL {position['stop_loss']:.2f}  P/L {position['profit']:+.2f}")
+            print("═" * 70)
+            return 0
+        finally:
+            await manager.close()
+
+    return asyncio.run(_show())
+
+
 def cmd_selftest(args: argparse.Namespace, config: Config) -> int:
     """Run the full engine over synthetic candles — no network required."""
     from .engine.signal_engine import SignalEngine
@@ -232,6 +306,13 @@ def build_parser() -> argparse.ArgumentParser:
     cal_p = sub.add_parser("calendar", help="show what the news guard sees")
     cal_p.add_argument("--hours", type=float, default=48, help="lookahead window")
     cal_p.set_defaults(func=cmd_calendar)
+
+    pos_p = sub.add_parser("positions", help="show the trading account and open positions")
+    pos_p.add_argument("--json", action="store_true", help="emit JSON")
+    pos_p.set_defaults(func=cmd_positions)
+
+    flat_p = sub.add_parser("flatten", help="EMERGENCY: close every position this system owns")
+    flat_p.set_defaults(func=cmd_flatten)
 
     st_p = sub.add_parser("selftest", help="run the engine on synthetic data")
     st_p.set_defaults(func=cmd_selftest)

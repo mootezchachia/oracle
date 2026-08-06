@@ -2,13 +2,17 @@
 
 Owns the async supervision loop and wires every layer together:
 
-    collector → news guard → signal engine → dispatcher / journal / dashboard
+    collector → news guard → signal engine → dispatcher / journal /
+                                              execution / dashboard
 
-Three independent tasks run concurrently:
+Four independent tasks run concurrently:
 
 * **market loop** — refreshes data and evaluates on a fixed cadence
 * **news loop** — refreshes the economic calendar and headline feeds
 * **maintenance loop** — resolves pending signals and re-runs the optimiser
+* **position loop** — manages live trades (break-even, partials, trailing) on
+  a much tighter interval, because a stop that should have moved to break-even
+  four minutes ago is real money
 
 Failure policy: a single cycle raising is logged and the loop continues with a
 backoff. A monitor that dies silently at 03:00 is worse than one that logs an
@@ -30,6 +34,8 @@ from .config import Config
 from .data.collector import MarketDataCollector
 from .engine.confluence import BASE_WEIGHTS
 from .engine.signal_engine import SignalEngine
+from .execution import ExecutionManager, build_broker
+from .execution.paper_broker import PaperBroker
 from .learning.journal import Journal, resolve_pending
 from .learning.optimizer import Optimizer
 from .logging_setup import get_logger
@@ -61,11 +67,17 @@ class Sentinel:
         self.journal = Journal(config)
         self.optimizer = Optimizer(config, self.journal)
 
+        # Execution stays disarmed unless explicitly enabled AND the broker's
+        # own safety gates pass. `start()` is what actually arms it.
+        self.execution = ExecutionManager(config, build_broker(config))
+
         self.last_decision: Decision | None = None
         self.last_news: NewsState | None = None
         self.last_error: str | None = None
         self.cycles = 0
         self.signals_emitted = 0
+        self.trades_executed = 0
+        self._execution_snapshot: dict[str, Any] = {"enabled": False, "armed": False}
         self._running = False
         self._tasks: list[asyncio.Task[Any]] = []
 
@@ -85,6 +97,13 @@ class Sentinel:
         self.guard.set_headlines(self.headlines.headlines)
 
         self._apply_learning()
+
+        armed = await self.execution.start()
+        if self.config.get("execution.enabled", False) and not armed:
+            log.error(
+                "execution was requested but could not be armed — the monitor "
+                "will keep running and publishing signals without trading them"
+            )
 
         log.info(
             "XAUUSD Sentinel online — provider=%s channels=%s min_confidence=%s%%",
@@ -108,6 +127,7 @@ class Sentinel:
             self.calendar.close(),
             self.headlines.close(),
             self.dispatcher.close(),
+            self.execution.close(),
             return_exceptions=True,
         )
         if self._session and not self._session.closed:
@@ -121,6 +141,7 @@ class Sentinel:
             asyncio.create_task(self._market_loop(), name="market"),
             asyncio.create_task(self._news_loop(), name="news"),
             asyncio.create_task(self._maintenance_loop(), name="maintenance"),
+            asyncio.create_task(self._position_loop(), name="positions"),
         ]
         with contextlib.suppress(asyncio.CancelledError):
             await asyncio.gather(*self._tasks)
@@ -174,6 +195,37 @@ class Sentinel:
                 log.exception("maintenance cycle failed")
             await asyncio.sleep(900.0)
 
+    async def _position_loop(self) -> None:
+        """Manage live positions far more often than signals are evaluated.
+
+        Break-even and trailing decisions are time-critical in a way that
+        signal generation is not — a stop that should have moved to break-even
+        four minutes ago is real money.
+        """
+        interval = float(self.config.get("execution.manage.interval_seconds", 15))
+        if not self.config.get("execution.manage.enabled", True):
+            return
+        while self._running:
+            try:
+                if self.execution.armed:
+                    price = self.collector.last_price or self.collector.store.price()
+                    await self.execution.sync_price(price)
+                    if isinstance(self.execution.broker, PaperBroker):
+                        # Paper has no server-side stops, so bars are replayed
+                        # here to resolve them.
+                        candle = self.collector.store.last(Timeframe.M1)
+                        if candle is not None:
+                            await self.execution.broker.apply_bar(candle)
+                    actions = await self.execution.manage(datetime.now(UTC), price)
+                    for action in actions:
+                        await self.dispatcher.send_text(f"⚙️ {action}")
+                self._execution_snapshot = await self.execution.snapshot()
+            except asyncio.CancelledError:
+                raise
+            except Exception:  # noqa: BLE001 - the loop must survive
+                log.exception("position management cycle failed")
+            await asyncio.sleep(interval)
+
     # -- one evaluation --------------------------------------------------------
     async def cycle(self) -> Decision:
         """Refresh data and produce one decision."""
@@ -183,6 +235,10 @@ class Sentinel:
 
         candles_by_tf = self.collector.store.all()
         session_state = self.clock.state(now)
+
+        # Sync price BEFORE evaluating: a signal produced this cycle is acted
+        # on within it, and an order cannot be priced against a stale broker.
+        await self.execution.sync_price(self.collector.last_price or self.collector.store.price())
 
         news_state = self.guard.evaluate(
             now,
@@ -208,6 +264,16 @@ class Sentinel:
             self.journal.record_signal(decision.signal)
             await self.dispatcher.send_signal(decision.signal)
 
+            execution = await self.execution.on_signal(decision.signal, now)
+            if execution.executed and execution.result is not None:
+                self.trades_executed += 1
+                await self.dispatcher.send_text(
+                    f"✅ Order filled — {execution.result.volume:.2f} lots "
+                    f"@ {execution.result.price:.2f} (ticket {execution.result.ticket})"
+                )
+            elif self.execution.enabled:
+                await self.dispatcher.send_text(f"⏸️ Signal not traded — {execution.reason}")
+
         every = float(self.config.get("notify.heartbeat.every_minutes", 240))
         if self.engine.state.heartbeat_due(every, now):
             uptime = (now - self.started_at).total_seconds()
@@ -231,7 +297,11 @@ class Sentinel:
 
     # -- introspection -----------------------------------------------------------
     def snapshot(self) -> dict[str, Any]:
-        """Everything the dashboard needs, in one JSON-serialisable object."""
+        """Everything the dashboard needs, in one JSON-serialisable object.
+
+        Synchronous by design so the dashboard can call it from anywhere; the
+        execution snapshot is refreshed by the position loop and cached here.
+        """
         now = datetime.now(UTC)
         session_state = self.clock.state(now)
         store = self.collector.store
@@ -251,6 +321,8 @@ class Sentinel:
             "uptime_seconds": int((now - self.started_at).total_seconds()),
             "cycles": self.cycles,
             "signals_emitted": self.signals_emitted,
+            "trades_executed": self.trades_executed,
+            "execution": self._execution_snapshot,
             "session": session_state.to_dict(),
             "news": self.last_news.to_dict() if self.last_news else None,
             "decision": self.last_decision.to_dict() if self.last_decision else None,

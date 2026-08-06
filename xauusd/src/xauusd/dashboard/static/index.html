@@ -187,6 +187,12 @@
       <div id="veto-body"><div class="empty">Collecting…</div></div>
     </div>
 
+    <!-- ================= EXECUTION ================= -->
+    <div class="card span2" id="exec-card">
+      <h2>Execution</h2>
+      <div id="exec-body"><div class="empty">Execution is disabled — monitoring only.</div></div>
+    </div>
+
     <!-- ================= RECENT SIGNALS ================= -->
     <div class="card span2">
       <h2>Recent signals</h2>
@@ -439,6 +445,66 @@
     }).join("");
   }
 
+  function renderExecution(e) {
+    const body = $("exec-body");
+    if (!e || !e.enabled) {
+      body.innerHTML = '<div class="empty">Execution is disabled — monitoring only.</div>';
+      return;
+    }
+    if (!e.armed) {
+      body.innerHTML = `<div class="row"><span class="k">Status</span>
+        <span class="v"><span class="badge sell">disarmed</span></span></div>
+        <div class="empty">${e.disarm_reason || "not armed"}</div>`;
+      return;
+    }
+
+    const acct = e.account || {};
+    const live = acct.is_demo === false;
+    const kill = e.kill_switch && e.kill_switch.active;
+
+    const positions = (e.positions || []).map((p) => {
+      const cls = p.direction === "BUY" ? "buy" : "sell";
+      const pnl = p.profit >= 0 ? `+${fmt(p.profit)}` : fmt(p.profit);
+      const flags = [
+        p.break_even_done ? "BE" : null,
+        p.trailing ? "trail" : null,
+        p.partials_taken ? `${p.partials_taken} partial` : null,
+      ].filter(Boolean).join(" · ") || "—";
+      return `<tr>
+        <td>${p.ticket}</td>
+        <td><span class="badge ${cls}">${p.direction}</span></td>
+        <td class="num">${fmt(p.volume)}</td>
+        <td class="num">${fmt(p.entry)}</td>
+        <td class="num">${fmt(p.stop_loss)}</td>
+        <td class="num" style="color:${p.profit >= 0 ? "var(--bull)" : "var(--bear)"}">${pnl}</td>
+        <td>${flags}</td>
+      </tr>`;
+    }).join("");
+
+    body.innerHTML = `
+      <div class="row"><span class="k">Status</span><span class="v">
+        ${kill ? '<span class="badge sell">KILL SWITCH</span>'
+               : '<span class="badge buy">armed</span>'}
+        <span class="badge">${e.broker}</span></span></div>
+      <div class="row"><span class="k">Account</span><span class="v">
+        ${live ? '<span class="badge sell">LIVE — REAL MONEY</span>'
+               : '<span class="badge buy">demo</span>'}
+        ${acct.login ? `#${acct.login}` : ""} ${acct.server || ""}</span></div>
+      <div class="row"><span class="k">Balance / equity</span><span class="v">
+        ${fmt(acct.balance)} / ${fmt(acct.equity)} ${acct.currency || ""}</span></div>
+      <div class="row"><span class="k">Trades today</span><span class="v">
+        ${e.day.trades} / ${e.day.max_trades}
+        <span class="muted">(loss limit ${e.day.max_loss_percent}%)</span></span></div>
+      ${kill ? `<div class="empty">${e.kill_switch.reason}</div>` : ""}
+      ${e.last_decision && !e.last_decision.executed
+          ? `<div class="empty">Last signal not traded — ${e.last_decision.reason}</div>` : ""}
+      ${positions ? `<div class="scroll" style="margin-top:8px"><table>
+          <thead><tr><th>Ticket</th><th>Dir</th><th class="num">Lots</th>
+          <th class="num">Entry</th><th class="num">Stop</th><th class="num">P/L</th><th>State</th></tr></thead>
+          <tbody>${positions}</tbody></table></div>`
+        : '<div class="empty">No open positions.</div>'}`;
+  }
+
   function renderSystem(s) {
     const d = s.data || {};
     $("y-provider").textContent = d.provider || "—";
@@ -465,6 +531,7 @@
     renderAnalysis(s.analysis, s.decision);
     renderCorrelation(s.decision);
     renderVetoes(s.journal);
+    renderExecution(s.execution);
     renderSignals(s.recent_signals);
     renderSystem(s);
   }
