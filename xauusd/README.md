@@ -38,13 +38,23 @@ as prominently as it shows a signal.**
 
 ```bash
 cd xauusd
-pip install -r requirements-dev.txt
+python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"                              # installs the package, not just deps
+```
 
+`pip install -e .` matters: the package lives under `src/`, so installing the
+requirements alone leaves `python -m xauusd` unable to find it. If you would
+rather not install, prefix every command with `PYTHONPATH=src`.
+
+```bash
 python -m xauusd selftest       # end-to-end check, no network needed
 python -m xauusd analyse        # one live evaluation, prints the full reasoning
 python -m xauusd calendar       # what the news guard currently sees
 python -m xauusd run            # continuous monitor + dashboard on :8787
 ```
+
+Once installed, the config file is found automatically from any working
+directory. Override it with `-c /path/to/config.yaml` or `XAUUSD_CONFIG`.
 
 Docker:
 

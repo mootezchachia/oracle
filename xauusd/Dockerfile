@@ -27,6 +27,10 @@ COPY pyproject.toml ./
 COPY config ./config
 COPY src ./src
 
+# Install the package itself so `python -m xauusd` resolves without PYTHONPATH
+# tricks. --no-deps because requirements.txt already pinned them above.
+RUN pip install --no-cache-dir --no-deps -e .
+
 # Run as an unprivileged user; the data and log directories must be writable.
 RUN useradd --create-home --uid 10001 sentinel \
     && mkdir -p /app/data /app/logs \
