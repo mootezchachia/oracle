@@ -57,6 +57,14 @@ class Backtester:
         self.guard = NewsGuard(config, self.calendar) if events else None
 
         self._history = config.section("data.history")
+        missing = [tf.value for tf in Timeframe if tf.seconds < provider._base.seconds]  # noqa: SLF001
+        if missing:
+            log.warning(
+                "dataset base is %s, so %s cannot be reconstructed. Those timeframes "
+                "are excluded; entry-timing confirmations that rely on them will not "
+                "contribute, and scores will run lower than they would live.",
+                provider._base.value, ", ".join(missing),  # noqa: SLF001
+            )
         self._spread = float(config.get("risk.spread_allowance_usd", 0.35))
         self._resolve_after = timedelta(hours=float(config.get("learning.resolve_after_hours", 12)))
 

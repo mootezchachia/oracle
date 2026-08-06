@@ -294,9 +294,18 @@ def resolve_outcome(
     best_target = -1
     start = candles[0].ts
 
+    # The last bar actually inside the trade's window. Marking an expired trade
+    # to market at ``candles[-1]`` instead would price it weeks later, at the
+    # end of whatever series happened to be passed in — which turns a flat
+    # scratch into a fabricated 20R loss.
+    last_seen: Candle | None = None
+    expired = False
+
     for candle in candles:
         if expire_after is not None and candle.ts - start > expire_after:
+            expired = True
             break
+        last_seen = candle
 
         favourable = (candle.high - entry) * sign if sign > 0 else (entry - candle.low) * -sign
         adverse = (entry - candle.low) * sign if sign > 0 else (candle.high - entry) * -sign
@@ -329,15 +338,18 @@ def resolve_outcome(
                 realised = _r_for_target(entry, targets[best_target], risk, sign)
                 return SignalOutcome.TP3, candle.ts, mfe, mae, realised
 
+    if last_seen is None:
+        return SignalOutcome.PENDING, None, mfe, mae, 0.0
+
     if best_target >= 0:
         outcome = [SignalOutcome.TP1, SignalOutcome.TP2, SignalOutcome.TP3][min(best_target, 2)]
         realised = _r_for_target(entry, targets[best_target], risk, sign)
-        return outcome, candles[-1].ts, mfe, mae, realised
+        return outcome, last_seen.ts, mfe, mae, realised
 
-    if expire_after is not None and candles[-1].ts - start >= expire_after:
-        # Expired flat: mark to market at the last close.
-        realised = (candles[-1].close - entry) * sign / risk
-        return SignalOutcome.EXPIRED, candles[-1].ts, mfe, mae, realised
+    if expired:
+        # Expired flat: mark to market at the last close *inside the window*.
+        realised = (last_seen.close - entry) * sign / risk
+        return SignalOutcome.EXPIRED, last_seen.ts, mfe, mae, realised
 
     return SignalOutcome.PENDING, None, mfe, mae, 0.0
 

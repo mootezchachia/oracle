@@ -67,6 +67,33 @@ class TestOutcomeResolution:
         assert outcome is not SignalOutcome.STOPPED
         assert r > 0
 
+    def test_expiry_marks_to_market_inside_the_window_not_at_series_end(self):
+        """The classic silent killer: pricing an expired trade weeks later.
+
+        The series continues long past the expiry window. Marking to market at
+        ``candles[-1]`` prices a flat scratch against every subsequent move —
+        one such trade produced a fabricated -21R on a 20-day backtest.
+        """
+        # 20 hours flat around entry, then a violent run far away.
+        flat = [
+            Candle(START + timedelta(hours=i), 4000, 4003, 3998, 4001, 100)
+            for i in range(20)
+        ]
+        runaway = [
+            Candle(START + timedelta(hours=20 + i), 4200 + i * 20, 4260 + i * 20,
+                   4190 + i * 20, 4250 + i * 20, 100)
+            for i in range(10)
+        ]
+        outcome, ts, mfe, mae, r = resolve_outcome(
+            Direction.SELL, 4000, 4012, [3970], flat + runaway,
+            expire_after=timedelta(hours=12),
+        )
+        assert outcome is SignalOutcome.EXPIRED
+        # Marked at the 12-hour close of 4001, not at 4430 twelve days later.
+        assert r == pytest.approx(-1 / 12, abs=0.02)
+        assert ts <= START + timedelta(hours=13)
+        assert abs(r) <= mae + 0.01
+
     def test_expiry_marks_to_market(self):
         candles = [
             Candle(START + timedelta(hours=i), 4000, 4003, 3998, 4001, 100)

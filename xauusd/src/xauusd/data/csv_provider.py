@@ -167,6 +167,12 @@ class CSVProvider(DataProvider):
     def _series(self, timeframe: Timeframe) -> list[Candle]:
         if timeframe is self._base:
             return self._candles
+        if timeframe.seconds < self._base.seconds:
+            # You cannot synthesise finer bars from coarser ones. Free data is
+            # usually M5 or M15, so the M1 precision layer is simply absent —
+            # returning empty lets the engine analyse what actually exists
+            # rather than inventing candles that never traded.
+            return []
         if timeframe not in self._cache:
             self._cache[timeframe] = aggregate(self._candles, self._base, timeframe)
         return self._cache[timeframe]
@@ -183,6 +189,8 @@ class CSVProvider(DataProvider):
 
     async def fetch_symbol(self, symbol: str, timeframe: Timeframe, count: int) -> list[Candle]:
         series = self._symbols.get(symbol, [])
+        if timeframe.seconds < self._base.seconds:
+            return []
         if timeframe is not self._base and series:
             series = aggregate(series, self._base, timeframe)
         if self.cursor is not None:
