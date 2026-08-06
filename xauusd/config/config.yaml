@@ -1,0 +1,328 @@
+# ===========================================================================
+#  XAUUSD SENTINEL — master configuration
+# ---------------------------------------------------------------------------
+#  Every value below can be overridden by an environment variable using the
+#  prefix XAUUSD_ and __ as the nesting separator, e.g.
+#      XAUUSD_SIGNALS__MIN_CONFIDENCE=92
+#      XAUUSD_NOTIFY__TELEGRAM__BOT_TOKEN=123:abc
+#  Secrets should ALWAYS come from the environment, never from this file.
+# ===========================================================================
+
+symbol: XAUUSD
+
+# --- Market data -----------------------------------------------------------
+data:
+  # Provider chain. The first one that initialises successfully wins; the rest
+  # act as hot fallbacks. "mt5" only works on Windows with a running terminal.
+  providers: [mt5, yahoo]
+
+  mt5:
+    # Broker symbol names vary: XAUUSD, XAUUSD.r, GOLD, XAUUSDm ...
+    symbol: XAUUSD
+    login: null            # int   — leave null to attach to an already-open terminal
+    password: null         # str
+    server: null           # str
+    terminal_path: null    # str  — full path to terminal64.exe if not auto-detected
+
+  yahoo:
+    # Yahoo has no true spot-gold intraday feed; GC=F (COMEX front-month) is
+    # the closest institutional proxy and tracks XAUUSD within a few dollars.
+    symbol: "GC=F"
+    spot_symbol: "XAUUSD=X"   # used for the daily/H4 anchor and the quoted price
+
+  # How many closed candles to keep per timeframe (ring buffer, in memory).
+  history:
+    M1: 720      # 12 hours
+    M5: 720      # 2.5 days
+    M15: 500     # ~5 days
+    H1: 400      # ~16 days
+    H4: 300      # ~50 days
+
+  poll_seconds: 20         # data refresh cadence
+  stale_after_seconds: 180 # feed considered dead after this without a new tick
+
+# --- Trading sessions (all windows are defined in EXCHANGE-LOCAL time and
+#     converted with full DST awareness through the IANA tz database) --------
+sessions:
+  windows:
+    sydney:   { tz: Australia/Sydney,  open: "07:00", close: "16:00" }
+    tokyo:    { tz: Asia/Tokyo,        open: "09:00", close: "18:00" }
+    london:   { tz: Europe/London,     open: "08:00", close: "16:30" }
+    new_york: { tz: America/New_York,  open: "08:00", close: "17:00" }
+
+  # ICT kill zones — the only windows where discretionary A+ setups are hunted.
+  # Defined in New York local time, DST-aware.
+  kill_zones:
+    asian:        { tz: America/New_York, open: "19:00", close: "22:00" }
+    london:       { tz: America/New_York, open: "02:00", close: "05:00" }
+    new_york_am:  { tz: America/New_York, open: "07:00", close: "10:00" }
+    london_close: { tz: America/New_York, open: "10:00", close: "12:00" }
+    new_york_pm:  { tz: America/New_York, open: "13:30", close: "16:00" }
+
+  # Minutes around a session open/close treated as "transition" — volatility
+  # regime shifts hard here, so scoring is adjusted rather than trusted blindly.
+  open_window_minutes: 45
+  close_window_minutes: 30
+
+  # Confidence multipliers applied to the raw confluence score.
+  # >1.0 rewards prime institutional hours, <1.0 penalises dead tape.
+  multipliers:
+    london_ny_overlap: 1.08   # the single best window for Gold
+    london_killzone: 1.06
+    new_york_am_killzone: 1.06
+    london_close_killzone: 1.00
+    new_york_pm_killzone: 0.98
+    asian_killzone: 0.92
+    session_open_transition: 1.02
+    session_close_transition: 0.96
+    off_session: 0.80         # effectively kills signals in dead hours
+
+  # During an overlap the *bar* is raised, not lowered: more participants means
+  # more traps, so we demand more evidence before firing.
+  overlap_min_confidence_bonus: 2.0   # added to min_confidence during overlaps
+
+  # Weekend / rollover blackout (broker server time assumed UTC+0 here).
+  blackout:
+    friday_close_utc: "20:00"
+    sunday_open_utc: "22:00"
+    daily_rollover_utc: "21:00"
+    daily_rollover_minutes: 15
+
+# --- Economic news / macro event guard -------------------------------------
+news:
+  enabled: true
+  # Free, no-key weekly JSON feed published by Forex Factory / FairEconomy.
+  calendar_url: "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
+  # Only the current week is published at this host (the next-week path 404s).
+  # No gap results: the feed's week runs Sunday-Saturday and has already rolled
+  # over by the Sunday 22:00 UTC market open, and the weekend blackout covers
+  # the interval in between. Set this if you have another source.
+  calendar_url_next_week: null
+  refresh_minutes: 30
+
+  # Currencies whose releases move Gold. USD dominates; the rest are secondary.
+  currencies: [USD, ALL, EUR, GBP, CNY, JPY]
+
+  # Keyword -> severity. Severity drives the blackout window length.
+  # CRITICAL events pause trading entirely; HIGH reduces confidence.
+  critical_keywords:
+    - "FOMC"
+    - "Federal Funds Rate"
+    - "Fed Chair"
+    - "Non-Farm Employment"
+    - "Nonfarm"
+    - "CPI m/m"
+    - "Core CPI"
+    - "Interest Rate"
+    - "Rate Statement"
+    - "Press Conference"
+  high_keywords:
+    - "PPI"
+    - "Unemployment Claims"
+    - "Retail Sales"
+    - "GDP"
+    - "Core PCE"
+    - "ISM"
+    - "Treasury"
+    - "Bond Auction"
+    - "Note Auction"
+    - "Jobless"
+    - "Employment Change"
+    - "PMI"
+
+  # Blackout windows in minutes, by severity.
+  blackout:
+    critical: { before: 60, after: 45 }
+    high:     { before: 30, after: 20 }
+    medium:   { before: 10, after: 10 }
+
+  # After a release the tape is untradeable until volatility mean-reverts.
+  # We require ATR(M5) to fall back below `settle_atr_ratio` x its pre-news
+  # value, and at least `settle_min_minutes` to have elapsed.
+  settle_min_minutes: 20
+  settle_atr_ratio: 1.6
+
+  # Confidence penalties (multiplicative) when an event is approaching but the
+  # hard blackout has not yet started.
+  approach_penalty:
+    critical: 0.70   # within 4h of FOMC/NFP/CPI
+    high: 0.88
+    medium: 0.96
+  approach_horizon_minutes:
+    critical: 240
+    high: 90
+    medium: 30
+
+  # Geopolitical / gold-specific headline monitoring (RSS, no key required).
+  headlines:
+    enabled: true
+    refresh_minutes: 15
+    feeds:
+      - "https://feeds.reuters.com/reuters/businessNews"
+      - "https://www.investing.com/rss/news_1.rss"
+      - "https://www.investing.com/rss/commodities_Gold.rss"
+      - "https://news.google.com/rss/search?q=gold+price+OR+federal+reserve+when:1d&hl=en-US&gl=US&ceid=US:en"
+    shock_keywords:
+      - war
+      - strike
+      - invasion
+      - sanction
+      - nuclear
+      - "emergency meeting"
+      - "central bank"
+      - default
+      - escalation
+    shock_penalty: 0.90
+    shock_window_minutes: 90
+
+# --- Multi-timeframe analysis ----------------------------------------------
+mtf:
+  # The full institutional top-down chain. A signal requires agreement across
+  # ALL gating timeframes; the execution timeframes only refine entry.
+  bias_timeframes: [H4, H1]        # must agree — hard gate
+  setup_timeframe: M15             # structure + POI must align — hard gate
+  entry_timeframes: [M5, M1]       # trigger + precision
+
+  swing_length:                    # fractal lookback per timeframe
+    M1: 3
+    M5: 4
+    M15: 5
+    H1: 5
+    H4: 4
+
+  # Minimum number of entry timeframes that must agree with the bias.
+  min_entry_agreement: 1
+
+# --- Indicators ------------------------------------------------------------
+indicators:
+  ema_fast: 20
+  ema_mid: 50
+  ema_slow: 200
+  rsi_period: 14
+  rsi_overbought: 72
+  rsi_oversold: 28
+  rsi_healthy_bull: [45, 68]     # a healthy bullish impulse lives here
+  rsi_healthy_bear: [32, 55]
+  macd: { fast: 12, slow: 26, signal: 9 }
+  atr_period: 14
+  adx_period: 14
+  adx_trending: 22               # below this the market is ranging
+  bb: { period: 20, stddev: 2.0 }
+  volume_ma: 20
+  volume_spike_ratio: 1.6        # volume / MA above this = institutional interest
+
+# --- Volatility regime ------------------------------------------------------
+volatility:
+  atr_lookback: 100              # bars used to rank current ATR percentile
+  low_percentile: 25
+  expansion_percentile: 75
+  spike_atr_ratio: 2.6           # current bar range / ATR -> news spike
+  spike_cooldown_minutes: 15
+  # Absolute sanity rails for Gold, in USD of ATR(M15).
+  min_atr_m15: 0.60              # below this the tape is too thin to trade
+  max_atr_m15: 12.0              # above this it is a panic tape — stand aside
+
+# --- Correlation desk -------------------------------------------------------
+correlation:
+  enabled: true
+  refresh_seconds: 120
+  instruments:
+    DXY:   { yahoo: "DX-Y.NYB", expected: inverse,  weight: 1.0 }
+    US10Y: { yahoo: "^TNX",     expected: inverse,  weight: 0.8 }
+    SILVER: { yahoo: "SI=F",    expected: direct,   weight: 0.6 }
+    SP500: { yahoo: "^GSPC",    expected: none,     weight: 0.3 }
+    NASDAQ: { yahoo: "^IXIC",   expected: none,     weight: 0.3 }
+  lookback_bars: 30              # bars used for the short-term drift check
+  agreement_bonus: 1.05
+  conflict_penalty: 0.88
+  strong_conflict_penalty: 0.75  # when DXY *and* US10Y both disagree
+
+# --- Signal generation ------------------------------------------------------
+signals:
+  min_confidence: 90.0           # nothing below this is ever emitted
+  # Supporting evidence weight that counts as a fully-made case. The raw score
+  # is purity x coverage, and coverage saturates here. Lower it and thin setups
+  # start clearing the floor; raise it and the system becomes even quieter.
+  full_conviction_weight: 52.0
+  min_rr: 2.0                    # blended R:R across the scale-out plan
+  max_signals_per_day: 4
+  cooldown_minutes: 45           # after any emitted signal
+  opposite_cooldown_minutes: 90  # before flipping direction
+  dedupe_price_atr: 0.75         # a new signal must be >0.75 ATR from the last
+  require_kill_zone: true        # only fire inside an ICT kill zone
+  require_displacement: true     # demand an impulsive leg, not drift
+  min_evidence_count: 6          # distinct confirmations required
+
+# --- Risk management --------------------------------------------------------
+risk:
+  account_balance: 10000.0
+  max_risk_percent: 1.0
+  contract_size: 100             # 1 lot XAUUSD = 100 oz
+  min_lot: 0.01
+  lot_step: 0.01
+  max_lot: 10.0
+
+  atr_timeframe: M15
+  sl_atr_multiple: 1.5           # base stop distance
+  sl_structure_buffer_atr: 0.25  # extra room beyond the invalidating swing
+  min_sl_usd: 1.50               # never risk less than this per oz (spread/slippage)
+  max_sl_usd: 12.0
+
+  tp_r_multiples: [1.5, 2.5, 4.0]   # TP1 / TP2 / TP3 expressed in R
+  partial_percents: [50, 30, 20]    # suggested scale-out
+  break_even_at_r: 1.0
+  trail_after_r: 1.5
+  trail_atr_multiple: 1.2
+  spread_allowance_usd: 0.35     # typical XAUUSD spread padding
+
+# --- Notifications ----------------------------------------------------------
+notify:
+  telegram:
+    enabled: false
+    bot_token: null              # env: XAUUSD_NOTIFY__TELEGRAM__BOT_TOKEN
+    chat_id: null                # env: XAUUSD_NOTIFY__TELEGRAM__CHAT_ID
+  discord:
+    enabled: false
+    webhook_url: null            # env: XAUUSD_NOTIFY__DISCORD__WEBHOOK_URL
+  # Heartbeat digest even when there is no trade, so you know it is alive.
+  heartbeat:
+    enabled: true
+    every_minutes: 240
+
+# --- Dashboard --------------------------------------------------------------
+dashboard:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8787
+  refresh_seconds: 5
+
+# --- TradingView integration ------------------------------------------------
+tradingview:
+  # Inbound webhook: point a TradingView alert here to inject external context.
+  webhook_enabled: true
+  webhook_path: "/tv/webhook"
+  webhook_secret: null           # env: XAUUSD_TRADINGVIEW__WEBHOOK_SECRET
+
+# --- Learning / journaling --------------------------------------------------
+learning:
+  enabled: true
+  db_path: "data/journal.sqlite3"
+  # Outcomes are resolved by replaying price after the signal.
+  resolve_after_hours: 12
+  # Adaptive weighting: evidence types that historically preceded losers get
+  # down-weighted, winners get up-weighted, bounded to avoid runaway drift.
+  optimize:
+    enabled: true
+    min_samples: 25
+    max_weight_multiplier: 1.35
+    min_weight_multiplier: 0.65
+    rerun_every_hours: 24
+
+# --- Logging ----------------------------------------------------------------
+logging:
+  level: INFO
+  directory: "logs"
+  file: "sentinel.log"
+  max_bytes: 10485760
+  backup_count: 7
+  json: false

@@ -1,0 +1,16 @@
+# ---------------------------------------------------------------------------
+# XAUUSD Sentinel — runtime dependencies
+#
+# The analysis core (indicators, market structure, SMC, price action, risk)
+# is deliberately implemented in PURE PYTHON with zero numeric dependencies.
+# That keeps the container small, the maths auditable, and the unit tests
+# runnable anywhere. Only I/O needs third-party code.
+# ---------------------------------------------------------------------------
+
+aiohttp>=3.9,<4          # async HTTP client + the dashboard web server / websockets
+PyYAML>=6.0              # configuration files
+
+# --- Optional extras -------------------------------------------------------
+# MetaTrader5 is Windows-only and is imported lazily; the system falls back to
+# the Yahoo/Stooq providers everywhere else.  Install with:
+#     pip install -r requirements-mt5.txt

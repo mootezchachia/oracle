@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xauusd-sentinel"
+version = "1.0.0"
+description = "Institutional-grade XAUUSD (Gold) market monitoring and high-conviction signal engine"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "aiohttp>=3.9,<4",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+mt5 = ["MetaTrader5>=5.0.45"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+xauusd-sentinel = "xauusd.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"xauusd.dashboard" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]

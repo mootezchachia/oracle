@@ -1,0 +1,5 @@
+-r requirements.txt
+
+# Windows only. The MT5 provider is imported lazily, so the rest of the system
+# works without this package installed.
+MetaTrader5>=5.0.45
