@@ -172,6 +172,21 @@ def cmd_calendar(args: argparse.Namespace, config: Config) -> int:
     return asyncio.run(_show())
 
 
+def cmd_doctor(args: argparse.Namespace, config: Config) -> int:
+    """Check every precondition for connecting to MetaTrader 5."""
+    from .preflight import run_preflight
+
+    ok, flight = run_preflight(config)
+    if args.json:
+        print(json.dumps(
+            {"ready": ok, "checks": [
+                {"name": c.name, "status": c.status, "detail": c.detail, "fix": c.fix}
+                for c in flight.checks]}, indent=2))
+    else:
+        print(flight.render(colour=sys.stdout.isatty()))
+    return 0 if ok else 1
+
+
 def cmd_flatten(args: argparse.Namespace, config: Config) -> int:
     """Emergency: close every position this system owns, right now."""
     from .execution import ExecutionManager, build_broker
@@ -306,6 +321,10 @@ def build_parser() -> argparse.ArgumentParser:
     cal_p = sub.add_parser("calendar", help="show what the news guard sees")
     cal_p.add_argument("--hours", type=float, default=48, help="lookahead window")
     cal_p.set_defaults(func=cmd_calendar)
+
+    doc_p = sub.add_parser("doctor", help="check everything needed to connect to MetaTrader 5")
+    doc_p.add_argument("--json", action="store_true", help="emit JSON")
+    doc_p.set_defaults(func=cmd_doctor)
 
     pos_p = sub.add_parser("positions", help="show the trading account and open positions")
     pos_p.add_argument("--json", action="store_true", help="emit JSON")
